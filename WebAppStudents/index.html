@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Student Check-in</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    label {
+      font-size: 1.2em;
+    }
+
+    input {
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 1.2em;
+      border-radius: 5px;
+      border: none;
+      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.2em;
+      border-radius: 5px;
+      border: none;
+      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+      background-color: #2196f3;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #0d8bf2;
+    }
+
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Student Check-in</h1>
+  <form>
+    <label for="student-number">Enter Student Number:</label>
+    <input type="text" id="student-number" name="student-number" required>
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    // Define variables to store student number and phone ID
+    let studentNumber = "";
+    let phoneID = "";
+
+    // Get form element and add event listener for form submission
+    const form = document.querySelector('form');
+    form.addEventListener('submit', submitForm);
+
+    function submitForm(event) {
+      // Prevent the form from submitting and refreshing the page
+      event.preventDefault();
+
+      // Get the value of the student number input field
+      studentNumber = document.querySelector('#student-number').value;
+
+      fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => alert(data.ip))
+        .catch(error => alert(err));
+
+    }
+  </script>
+</body>
+
+</html>
