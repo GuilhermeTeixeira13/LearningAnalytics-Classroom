@@ -3,6 +3,7 @@
 
 <head>
   <title>Student Check-in</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -50,8 +51,26 @@
       background-color: #0d8bf2;
     }
 
-    canvas {
+    #reader {
+      width: 500px;
+    }
+
+    .result {
+      background-color: green;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .row {
+      display: flex;
+    }
+
+    #qr {
       display: none;
+    }
+
+    #reader__scan_region {
+      background: white;
     }
   </style>
 </head>
@@ -61,31 +80,56 @@
   <form>
     <label for="student-number">Enter Student Number:</label>
     <input type="text" id="student-number" name="student-number" required>
-    <button type="submit">Submit</button>
+    <button id="submittbtn" type="submit">Submit</button>
   </form>
+
+  <!-- QR SCANNER CODE BELOW  -->
+  <div id="qr">
+    <div class="row">
+      <div class="col">
+        <div id="reader"></div>
+      </div>
+      <div class="col" style="padding: 30px">
+        <h4>Scan Result </h4>
+        <div id="result">
+          Result goes here
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Define variables to store student number and phone ID
     let studentNumber = "";
     let phoneID = "";
 
-    // Get form element and add event listener for form submission
     const form = document.querySelector('form');
-    form.addEventListener('submit', submitForm);
-
-    function submitForm(event) {
-      // Prevent the form from submitting and refreshing the page
+    form.addEventListener('submit', function (event) {
       event.preventDefault();
 
       // Get the value of the student number input field
       studentNumber = document.querySelector('#student-number').value;
 
-      fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => alert(data.ip))
-        .catch(error => alert(err));
+      let machineId = localStorage.getItem('MachineId');
+      if (!machineId) {
+        machineId = crypto.randomUUID();
+        localStorage.setItem('MachineId', machineId);
+      }
+      console.log(machineId);
 
-    }
+      document.getElementById("qr").style.display = "flex";
+
+      const html5QrCode = new Html5Qrcode("reader");
+      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        document.getElementById("result").innerHTML =
+          '<span class="result">' + decodedText + "</span>";
+        console.log(decodedText);
+      };
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      // If you want to prefer back camera
+      html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+
+    });
   </script>
 </body>
 
