@@ -146,6 +146,8 @@
         .catch(error => {
           // handle the error
         });
+        
+        html5QrCode.stop();
       }
       
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
