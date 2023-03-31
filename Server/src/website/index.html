@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Student Check-in</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="form.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <h1>Student Check-in</h1>
+
+  <form id="form-student-number" onsubmit="handleSubmit(event)">
+    <label for="student-number">Enter Student Number:</label>
+    <input type="text" id="student-number" name="student-number" required>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="qr-scan">
+    <div id="reader"></div>
+  </div>
+
+</body>
+
+</html>
