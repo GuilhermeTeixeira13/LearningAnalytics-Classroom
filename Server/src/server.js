@@ -7,7 +7,7 @@ const fs = require('fs');
 const app = express();
 
 // Serve static files from the "static" directory
-app.use(express.static('static'));
+app.use(express.static(__dirname + '/website/'));
 
 // Parse JSON data in the request body
 app.use(express.json());
