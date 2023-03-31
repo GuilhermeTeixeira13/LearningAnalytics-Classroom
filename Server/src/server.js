@@ -25,7 +25,7 @@ app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-  const machineId = req.params.machineID;
+  const machineID = req.params.machineID;
 
   // Create a new registration object
   const registo = {
