@@ -21,20 +21,20 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/website/index.html');
 });
 
-app.post('/table/:tablenumber/:studentnumber/:machineId', (req, res) => {
+app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-  const machineId = req.params.machineId;
+  const machineId = req.params.machineID;
 
   // Create a new registration object
   const registo = {
-    "data": "27-03-2023",
-    "hora": "11:14",
-    "aula": "Redes de Computadores",
-    "num": studentnumber,
+    "date": getCurrentDate(),
+    "time": getCurrentTime(),
+    "class": "Redes de Computadores",
+    "student-number": studentnumber,
     "table": tablenumber,
-    "idMaquina": machineId
+    "phone-id": machineID
   };
 
   // Add the registration object to the array
@@ -48,6 +48,22 @@ app.get('/table', (req, res) => {
   // Return all registration objects in the response
   return res.status(200).json(registos);
 });
+
+function getCurrentDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${day}-${month}-${year}`;
+}
+
+function getCurrentTime() {
+  const now = new Date();
+  const hour = String(now.getHours()).padStart(2, '0');
+  const minute = String(now.getMinutes()).padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
 
 // Configure HTTPS options
 const options = {
