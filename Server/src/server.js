@@ -26,8 +26,8 @@ app.post('/table/:tablenumber/:studentnumber', (req, res) => {
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
 
-  // Get the User-Agent header from the request
-  const userAgent = req.headers['user-agent'];
+  // Get the IP address of the client that made the request
+  const ipAddress = req.connection.remoteAddress;
 
   // Create a new registration object
   const registo = {
@@ -36,7 +36,7 @@ app.post('/table/:tablenumber/:studentnumber', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "phone-id": userAgent
+    "ipAddress": ipAddress
   };
 
   // Add the registration object to the array
@@ -64,13 +64,6 @@ function getCurrentTime() {
   const hour = String(now.getHours()).padStart(2, '0');
   const minute = String(now.getMinutes()).padStart(2, '0');
   return `${hour}:${minute}`;
-}
-
-function getMACAddress() {
-  const networkInterfaces = os.networkInterfaces();
-  const wlan0Interface = networkInterfaces.wlan0 || [];
-  const wifiInterface = wlan0Interface.find(intf => intf.family === 'IPv4');
-  return wifiInterface.mac;
 }
 
 // Configure HTTPS options
