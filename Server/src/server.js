@@ -2,7 +2,6 @@
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
-const os = require('os');
 
 // Initialize the Express application
 const app = express();
@@ -27,6 +26,9 @@ app.post('/table/:tablenumber/:studentnumber', (req, res) => {
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
 
+  // Get the User-Agent header from the request
+  const userAgent = req.headers['user-agent'];
+
   // Create a new registration object
   const registo = {
     "date": getCurrentDate(),
@@ -34,7 +36,7 @@ app.post('/table/:tablenumber/:studentnumber', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "phone-id": getMACAddress()
+    "phone-id": userAgent
   };
 
   // Add the registration object to the array
