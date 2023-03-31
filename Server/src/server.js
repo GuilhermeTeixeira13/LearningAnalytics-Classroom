@@ -21,11 +21,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/website/index.html');
 });
 
-app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
+app.post('/table/:tablenumber/:studentnumber', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-  const machineID = req.params.machineID;
 
   // Create a new registration object
   const registo = {
@@ -34,7 +33,7 @@ app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "phone-id": machineID
+    "phone-id": getMACAddress()
   };
 
   // Add the registration object to the array
@@ -64,6 +63,12 @@ function getCurrentTime() {
   return `${hour}:${minute}`;
 }
 
+function getMACAddress() {
+  const networkInterfaces = os.networkInterfaces();
+  const wlan0Interface = networkInterfaces.wlan0 || [];
+  const wifiInterface = wlan0Interface.find(intf => intf.family === 'IPv4');
+  return wifiInterface.mac;
+}
 
 // Configure HTTPS options
 const options = {

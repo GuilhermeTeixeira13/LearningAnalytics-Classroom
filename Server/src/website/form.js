@@ -5,14 +5,6 @@ function handleSubmit(event) {
   // Get the value of the student number input field
   const studentNumber = document.querySelector('#student-number').value;
 
-  // Get or generate the machine ID
-  let machineID = localStorage.getItem('MachineId');
-  if (!machineID) {
-    // Generate a random UUID and store it in local storage
-    machineID = crypto.randomUUID();
-    localStorage.setItem('MachineId', machineID);
-  }
-
   // Set up the HTML5 QR code scanner
   const html5QrCode = new Html5Qrcode("reader");
   const config = { fps: 10, qrbox: { width: 250, height: 250 } };
@@ -20,7 +12,7 @@ function handleSubmit(event) {
   // Define the success callback for when a QR code is scanned
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
     // Send the attendance data to the server 
-    const request = decodedText + studentNumber + "/" + machineID;
+    const request = decodedText + studentNumber;
     fetch(request, {
       method: 'POST',
       headers: {
