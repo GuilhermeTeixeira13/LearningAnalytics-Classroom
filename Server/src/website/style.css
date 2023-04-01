@@ -48,21 +48,20 @@ button[type="submit"] {
   cursor: pointer;
 }
 
-/* QR code reader styles */
+#reader {
+  width: 500px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
 #qr-scan {
   display: none;
   justify-content: center;
   align-items: center;
-  height: 100vh;
   background-color: #000;
 }
 
-#reader {
-  width: 80vw;
-  max-width: 30rem;
-  height: 80vw;
-  max-height: 30rem;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+#reader__scan_region {
+  background: white;
 }
 
