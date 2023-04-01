@@ -44,4 +44,5 @@ function handleSubmit(event) {
   // Display the QR code scanner and hide the form
   document.getElementById("qr-scan").style.display = "flex";
   document.getElementById("form-student-number").style.display = "none";
+  document.getElementById("title").innerHTML = "Scan the QR CODE";
 }
