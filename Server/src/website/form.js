@@ -15,7 +15,7 @@ function handleSubmit(event) {
 
   // Set up the HTML5 QR code scanner
   const html5QrCode = new Html5Qrcode("reader");
-  const config = { fps: 30, qrbox: { width: 250, height: 250 } };
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
   // Define the success callback for when a QR code is scanned
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
