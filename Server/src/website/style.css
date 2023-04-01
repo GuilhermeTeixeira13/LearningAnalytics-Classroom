@@ -56,10 +56,8 @@ button[type="submit"] {
 
 #qr-scan {
   display: none;
-  width: 500px;
   justify-content: center;
   align-items: center;
-  background-color: #000;
 }
 
 #reader__scan_region {
