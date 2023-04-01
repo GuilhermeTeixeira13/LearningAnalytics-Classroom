@@ -2,6 +2,11 @@ function handleSubmit(event) {
   // Prevent the default form submission behavior
   event.preventDefault();
 
+  // Display the QR code scanner and hide the form
+  document.getElementById("qr-scan").style.display = "flex";
+  document.getElementById("form-student-number").style.display = "none";
+  document.getElementById("title").innerHTML = "Scan the QR CODE";
+
   // Get the value of the student number input field
   const studentNumber = document.querySelector('#student-number').value;
 
@@ -36,13 +41,11 @@ function handleSubmit(event) {
 
     // Stop the QR code scanner
     html5QrCode.stop();
+
+    document.getElementById("scan-result").style.display = "flex";
+    document.getElementById("title").innerHTML = "Presence successfully registered!";
   };
 
   // Start the HTML5 QR code scanner with the success callback
   html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
-
-  // Display the QR code scanner and hide the form
-  document.getElementById("qr-scan").style.display = "flex";
-  document.getElementById("form-student-number").style.display = "none";
-  document.getElementById("title").innerHTML = "Scan the QR CODE";
 }

@@ -74,6 +74,12 @@ button[type="submit"] {
   background: white;
 }
 
+#scan-result {
+  display: hide;
+  justify-content: center;
+  align-items: center;
+}
+
 @media only screen and (max-width: 600px) {
   .container {
     padding: 1rem;
