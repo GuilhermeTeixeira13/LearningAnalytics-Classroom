@@ -4,9 +4,6 @@ const https = require('https');
 const fs = require('fs');
 const { networkInterfaces } = require('os');
 
-// Create a global variable to store the IP address
-global.serverIpAddress = ipAddress;
-
 // Initialize the Express application
 const app = express();
 
