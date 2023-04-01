@@ -76,7 +76,6 @@ const options = {
 // Get wlan0 IP adress
 const nets = networkInterfaces();
 const ipAddress = nets['wlan0'][0].address;
-global.serverIpAddress = ipAddress;
 
 // Start the server using HTTPS
 https.createServer(options, app).listen(3333, global.serverIpAddress, () => {
