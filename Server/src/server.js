@@ -2,6 +2,10 @@
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
+const { networkInterfaces } = require('os');
+
+// Create a global variable to store the IP address
+global.serverIpAddress = ipAddress;
 
 // Initialize the Express application
 const app = express();
@@ -72,7 +76,12 @@ const options = {
   cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.cert')
 };
 
+// Get wlan0 IP adress
+const nets = networkInterfaces();
+const ipAddress = nets['wlan0'][0].address;
+global.serverIpAddress = ipAddress;
+
 // Start the server using HTTPS
-https.createServer(options, app).listen(3333, () => {
+https.createServer(options, app).listen(3333, global.serverIpAddress, () => {
   console.log('Server is running on port 3333');
 });

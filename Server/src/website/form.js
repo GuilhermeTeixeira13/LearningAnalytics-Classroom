@@ -2,6 +2,11 @@ function handleSubmit(event) {
   // Prevent the default form submission behavior
   event.preventDefault();
 
+  // Import the global server IP address
+  const serverIpAddress = global.serverIpAddress;
+  // Use the IP address in your code
+  console.log(`Server IP address is ${serverIpAddress}`);
+
   // Get the value of the student number input field
   const studentNumber = document.querySelector('#student-number').value;
 
