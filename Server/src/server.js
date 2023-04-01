@@ -2,7 +2,6 @@
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
-const { networkInterfaces } = require('os');
 
 // Initialize the Express application
 const app = express();
@@ -22,13 +21,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/website/index.html');
 });
 
-app.post('/table/:tablenumber/:studentnumber', (req, res) => {
+app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-
-  // Get the IP address of the client that made the request
-  const ipAddress = req.connection.remoteAddress;
+  const phoneID = req.params.phoneID;
 
   // Create a new registration object
   const registo = {
@@ -37,7 +34,7 @@ app.post('/table/:tablenumber/:studentnumber', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "ipAddress": ipAddress
+    "ipAddress": phoneID
   };
 
   // Add the registration object to the array
@@ -73,11 +70,8 @@ const options = {
   cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.cert')
 };
 
-// Get wlan0 IP adress
-const nets = networkInterfaces();
-const ipAddress = nets['wlan0'][0].address;
-
 // Start the server using HTTPS
-https.createServer(options, app).listen(3333, global.serverIpAddress, () => {
+https.createServer(options, app).listen(3333, () => {
   console.log('Server is running on port 3333');
 });
+

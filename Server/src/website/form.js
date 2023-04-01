@@ -1,14 +1,17 @@
-<script src="server.js"></script>
-
 function handleSubmit(event) {
   // Prevent the default form submission behavior
   event.preventDefault();
 
-  // Use the IP address in your code
-  console.log(`Server IP address is ${ipAddress}`);
-
   // Get the value of the student number input field
   const studentNumber = document.querySelector('#student-number').value;
+
+  // Get or generate the machine ID
+  let machineID = localStorage.getItem('MachineId');
+  if (!machineID) {
+    // Generate a random UUID and store it in local storage
+    machineID = crypto.randomUUID();
+    localStorage.setItem('MachineId', machineID);
+  }
 
   // Set up the HTML5 QR code scanner
   const html5QrCode = new Html5Qrcode("reader");
@@ -17,7 +20,7 @@ function handleSubmit(event) {
   // Define the success callback for when a QR code is scanned
   const qrCodeSuccessCallback = (decodedText, decodedResult) => {
     // Send the attendance data to the server 
-    const request = decodedText + studentNumber;
+    const request = decodedText + studentNumber + "/" + machineID;
     fetch(request, {
       method: 'POST',
       headers: {
