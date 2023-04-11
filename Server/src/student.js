@@ -21,11 +21,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/website/index.html');
 });
 
-app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
+app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-  const phoneID = req.params.phoneID;
+  const machineID = req.params.machineID;
 
   // Create a new registration object
   const registo = {
@@ -34,7 +34,7 @@ app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "ipAddress": phoneID
+    "phone-id": machineID
   };
 
   // Add the registration object to the array
@@ -64,14 +64,15 @@ function getCurrentTime() {
   return `${hour}:${minute}`;
 }
 
+
 // Configure HTTPS options
 const options = {
   key: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.key'),
   cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.cert')
 };
 
-// Start the server using HTTPS
-https.createServer(options, app).listen(3333, () => {
-  console.log('Server is running on port 3333');
+https.createServer(options, app).listen(3333, () => {  
+  console.log('Student server is running on port 3333');
 });
+
 
