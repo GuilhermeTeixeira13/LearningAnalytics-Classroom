@@ -21,11 +21,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/website/index.html');
 });
 
-app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
+app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
   // Extract data from request parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
-  const machineID = req.params.machineID;
+  const phoneID = req.params.phoneID;
 
   // Create a new registration object
   const registo = {
@@ -34,7 +34,7 @@ app.post('/table/:tablenumber/:studentnumber/:machineID', (req, res) => {
     "class": "Redes de Computadores",
     "student-number": studentnumber,
     "table": tablenumber,
-    "phone-id": machineID
+    "phone-id": phoneID
   };
 
   // Add the registration object to the array

@@ -35,7 +35,12 @@ function handleSubmit(event) {
       }
     })
       .then(response => {
-        // handle the response
+        if(response.status === 404){
+          document.getElementById("title").innerHTML = "An error has occurred!";
+        }
+        else {
+          document.getElementById("title").innerHTML = "Presence successfully registered!";
+        }
       })
       .catch(error => {
         document.getElementById("title").innerHTML = "An error has occurred!";
@@ -43,7 +48,6 @@ function handleSubmit(event) {
 
     // Stop the QR code scanner
     html5QrCode.stop();
-    document.getElementById("title").innerHTML = "Presence successfully registered!";
   };
 
   // Start the HTML5 QR code scanner with the success callback
