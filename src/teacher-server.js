@@ -4,6 +4,8 @@ const { spawn } = require('child_process');
 
 const app = express();
 
+let childProcess;
+
 // Serve static files from the "static" directory
 app.use(express.static(__dirname + '/website-teacher/'));
 
@@ -16,7 +18,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/start-new-server', (req, res) => {
-  const childProcess = spawn('node', ['src/student-server.js']);
+  childProcess = spawn('node', ['src/student-server.js']);
   childProcess.stdout.on('data', (data) => {
     console.log(data.toString());
   });
