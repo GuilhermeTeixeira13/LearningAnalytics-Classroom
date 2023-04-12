@@ -25,6 +25,15 @@ app.get('/start-new-server', (req, res) => {
   });
 });
 
+app.get('/stop-server', (req, res) => {
+    if(childProcess){
+      childProcess.kill();
+      console.log('Student server closed.');
+    } else {
+      console.log('No server running.');
+    }
+});
+
 const server = http.createServer(app);
 
 server.listen(3334, () => {
