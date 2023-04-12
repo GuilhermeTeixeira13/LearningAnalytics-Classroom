@@ -4,23 +4,15 @@ const { spawn } = require('child_process');
 
 const app = express();
 
+// Serve static files from the "static" directory
+app.use(express.static(__dirname + '/website-teacher/'));
+
 app.use(express.json());
 
+// Define routes
 app.get('/', (req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write('<button id="start-server">Start new server</button>');
-  res.end(`
-    <script>
-      document.getElementById('start-server').addEventListener('click', () => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', '/start-new-server');
-        xhr.onload = function() {
-          console.log(xhr.responseText);
-        };
-        xhr.send();
-      });
-    </script>
-  `);
+  // Serve the homepage
+  res.sendFile(__dirname + '/website-teacher/index.html');
 });
 
 app.get('/start-new-server', (req, res) => {

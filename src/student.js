@@ -7,7 +7,7 @@ const fs = require('fs');
 const app = express();
 
 // Serve static files from the "static" directory
-app.use(express.static(__dirname + '/website/'));
+app.use(express.static(__dirname + '/website-student/'));
 
 // Parse JSON data in the request body
 app.use(express.json());
@@ -18,7 +18,7 @@ const registos = [];
 // Define routes
 app.get('/', (req, res) => {
   // Serve the homepage
-  res.sendFile(__dirname + '/website/index.html');
+  res.sendFile(__dirname + '/website-student/index.html');
 });
 
 app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
@@ -67,8 +67,8 @@ function getCurrentTime() {
 
 // Configure HTTPS options
 const options = {
-  key: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.key'),
-  cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/Server/src/server.cert')
+  key: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.key'),
+  cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.cert')
 };
 
 https.createServer(options, app).listen(3333, () => {  

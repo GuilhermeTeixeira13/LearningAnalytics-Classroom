@@ -2,15 +2,16 @@
   "name": "iot_attandance_project",
   "version": "1.0.0",
   "description": "",
-  "main": "welcome.js",
+  "main": "src/teacher.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js"
+    "start": "nodemon src/teacher.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "child_process": "^1.0.2",
     "express": "^4.18.2",
     "https": "^1.0.0",
     "nodemon": "^2.0.21"
