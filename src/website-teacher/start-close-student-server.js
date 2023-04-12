@@ -1,4 +1,4 @@
-function startServer() {
+function startStudentServer() {
     // Make an AJAX request to start the server
     fetch('/start-new-server')
         .then(response => {
@@ -8,14 +8,14 @@ function startServer() {
             const startBtn = document.getElementById("start-server");
             startBtn.style.display = "none";
             const closeBtn = document.getElementById("close-server");
-            closeBtn.style.display = "flex";
+            closeBtn.style.display = "block";
         })
         .catch(error => {
             console.error('Error starting server:', error);
         });
 }
 
-function closeServer() {
+function closeStudentServer() {
     // Make an AJAX request to stop the server
     fetch('/stop-server')
         .then(response => {
@@ -23,7 +23,7 @@ function closeServer() {
             document.cookie = "serverState=stopped";
             // Update the button styles
             const startBtn = document.getElementById("start-server");
-            startBtn.style.display = "flex";
+            startBtn.style.display = "block";
             const closeBtn = document.getElementById("close-server");
             closeBtn.style.display = "none";
         })
@@ -35,11 +35,15 @@ function closeServer() {
 // Check the value of the "serverState" cookie when the page loads
 window.addEventListener('load', () => {
     const serverState = getCookie('serverState');
+    const startBtn = document.getElementById("start-server");
+    const closeBtn = document.getElementById("close-server");
     if (serverState === 'running') {
-        const startBtn = document.getElementById("start-server");
         startBtn.style.display = "none";
-        const closeBtn = document.getElementById("close-server");
         closeBtn.style.display = "flex";
+    }
+    else {
+        startBtn.style.display = "block";
+        closeBtn.style.display = "none";
     }
 });
 

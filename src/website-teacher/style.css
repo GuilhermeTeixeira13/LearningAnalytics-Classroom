@@ -44,7 +44,7 @@ button:hover {
 }
 
 #start-server {
-  display: block;
+  display: none;
 }
 
 #close-server {
