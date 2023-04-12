@@ -26,6 +26,8 @@ app.get('/start-new-server', (req, res) => {
   childProcess.on('error', (err) => {
     console.error('Error spawning process:', err);
   });
+  
+  res.status(200).send("Student server started successfully!");
 });
 
 app.get('/stop-server', (req, res) => {
@@ -35,6 +37,8 @@ app.get('/stop-server', (req, res) => {
   } else {
     console.log('No server running.');
   }
+  
+  res.status(200).send("Student server closed successfully!");
 });
 
 app.get('/server-state', (req, res) => {
