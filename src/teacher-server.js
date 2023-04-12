@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/start-new-server', (req, res) => {
-  const childProcess = spawn('node', ['src/student.js']);
+  const childProcess = spawn('node', ['src/student-server.js']);
   childProcess.stdout.on('data', (data) => {
     console.log(data.toString());
   });
