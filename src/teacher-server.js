@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 const app = express();
 
 let childProcess;
+let serverState = 'stopped';
 
 // Serve static files from the "static" directory
 app.use(express.static(__dirname + '/website-teacher/'));
@@ -28,12 +29,22 @@ app.get('/start-new-server', (req, res) => {
 });
 
 app.get('/stop-server', (req, res) => {
-    if(childProcess){
-      childProcess.kill();
-      console.log('Student server closed.');
-    } else {
-      console.log('No server running.');
-    }
+  if (childProcess) {
+    childProcess.kill();
+    console.log('Student server closed.');
+  } else {
+    console.log('No server running.');
+  }
+});
+
+app.get('/server-state', (req, res) => {
+  res.send(serverState);
+});
+
+app.post('/update-server-state', (req, res) => {
+  const { state } = req.body;
+  serverState = state;
+  res.send({ success: true });
 });
 
 const server = http.createServer(app);
