@@ -10,9 +10,14 @@
 
 <body>
   <div class="container">
-    <h1 id="title">Teacher View</h1>
+    <h1 id="title">Teacher Dashboard</h1>
+    <div id="class">
+		<label for="class-name" id="class-label"></label>
+		<input type="text" id="class-name" name="class-name" required>
+	</div>
     <button id="start-server" onclick="startStudentServer()">Start student server</button>
     <button id="close-server" onclick="stopStudentServer()">Close student server</button>
+    <div id="error-msg"></div>
   </div>
 </body>
 
