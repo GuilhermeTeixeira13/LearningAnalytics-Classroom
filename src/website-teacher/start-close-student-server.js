@@ -16,8 +16,8 @@ function toggleServer(state) {
     closeBtn.style.display = (state === 'running') ? 'block' : 'none';
     errorDiv.style.display = (state === 'running') ? 'none' : 'block';
     className.readOnly = (state === 'running') ? true : false;
+    className.value = (state === 'stopped') ? '' : className.value;
     classLabel.innerHTML = (state === 'running') ? 'Class currently running:' : 'Enter class name:';
-
 }
 
 function startStudentServer() {
@@ -26,6 +26,7 @@ function startStudentServer() {
         errorDiv.innerHTML = "The class name can't be empty!";
     } else {
         errorDiv.innerHTML = "";
+        updateServerClassName(document.getElementById('class-name').value);
         // Make an AJAX request to start the server
         fetch('/start-new-server')
             .then(response => toggleServer('running'))
@@ -53,6 +54,16 @@ function updateServerState(state) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ state }),
+    });
+}
+
+function updateServerClassName(className) {
+    fetch('/update-server-class-name', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ className }),
     });
 }
 

@@ -6,6 +6,8 @@ const fs = require('fs');
 // Initialize the Express application
 const app = express();
 
+const serverClassName = process.argv[2];
+
 // Serve static files from the "static" directory
 app.use(express.static(__dirname + '/website-student/'));
 
@@ -31,7 +33,7 @@ app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
   const registo = {
     "date": getCurrentDate(),
     "time": getCurrentTime(),
-    "class": "Redes de Computadores",
+    "class": serverClassName,
     "student-number": studentnumber,
     "table": tablenumber,
     "phone-id": phoneID
@@ -72,7 +74,7 @@ const options = {
 };
 
 https.createServer(options, app).listen(3333, () => {  
-  console.log('Student server is running on port 3333');
+  console.log('Student server is running on port 3333. Class name = ' + serverClassName);
 });
 
 

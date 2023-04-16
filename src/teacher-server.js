@@ -6,6 +6,7 @@ const app = express();
 
 let childProcess;
 let serverState = 'stopped';
+let serverClassName = '';
 
 // Serve static files from the "static" directory
 app.use(express.static(__dirname + '/website-teacher/'));
@@ -19,7 +20,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/start-new-server', (req, res) => {
-  childProcess = spawn('node', ['src/student-server.js']);
+  childProcess = spawn('node', ['src/student-server.js', serverClassName]);
   childProcess.stdout.on('data', (data) => {
     console.log(data.toString());
   });
@@ -33,9 +34,9 @@ app.get('/start-new-server', (req, res) => {
 app.get('/stop-server', (req, res) => {
   if (childProcess) {
     childProcess.kill();
-    console.log('Student server closed.');
+    console.log('Student server closed.\n');
   } else {
-    console.log('No server running.');
+    console.log('No server running.\n');
   }
   
   res.status(200).send("Student server closed successfully!");
@@ -51,9 +52,15 @@ app.post('/update-server-state', (req, res) => {
   res.send({ success: true });
 });
 
+app.post('/update-server-class-name', (req, res) => {
+  const { className } = req.body;
+  serverClassName = className;
+  res.send({ success: true });
+});
+
 const server = http.createServer(app);
 
 server.listen(3334, () => {
-  console.log('Teacher server running on port 3334');
+  console.log('Teacher server running on port 3334.\n');
 });
 
