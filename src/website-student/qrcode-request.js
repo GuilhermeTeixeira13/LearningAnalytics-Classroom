@@ -17,6 +17,16 @@ function handleSubmit(event) {
     machineID = crypto.randomUUID();
     localStorage.setItem('MachineId', machineID);
   }
+  
+  // Student number and ID verification
+  /*
+   * // Ir buscar o machieID primeiramente associado ao studentNumber (firstMachineID)
+   * 
+   *  if (firstMachineID != machineID && firstMachineID != null) {
+   *    Aviso de que não é possível marcar presença pois o aluno está a fazer batota (Ir para outra página)
+   *  } 
+   * 
+   * */
 
   // Set up the HTML5 QR code scanner
   const html5QrCode = new Html5Qrcode("reader");
