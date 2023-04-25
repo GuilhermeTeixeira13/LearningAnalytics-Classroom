@@ -1,35 +1,37 @@
-// Import required packages
+// Import required modules
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
 
-// Initialize the Express application
+// Create an instance of the express application
 const app = express();
 
+// Get the server class name from the command line arguments
 const serverClassName = process.argv[2];
 
-// Serve static files from the "static" directory
+// Serve static files from the "website-student" directory
 app.use(express.static(__dirname + '/website-student/'));
 
-// Parse JSON data in the request body
+// Enable JSON request parsing
 app.use(express.json());
 
-// Create an array to store registration data
+// Initialize an empty array to store attendance records
 const registos = [];
 
-// Define routes
+// Define a route to handle HTTP GET requests to the root path
 app.get('/', (req, res) => {
-  // Serve the homepage
+  // Serve the "index.html" file as the response
   res.sendFile(__dirname + '/website-student/index.html');
 });
 
+// Define a route to handle HTTP POST requests to the "/table/:tablenumber/:studentnumber/:phoneID" path
 app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
-  // Extract data from request parameters
+  // Get the table number, student number and phone ID from the URL parameters
   const studentnumber = req.params.studentnumber;
   const tablenumber = req.params.tablenumber;
   const phoneID = req.params.phoneID;
 
-  // Create a new registration object
+  // Create a new attendance record with the current date, time, class name, student number, table number and phone ID
   const registo = {
     "date": getCurrentDate(),
     "time": getCurrentTime(),
@@ -39,18 +41,20 @@ app.post('/table/:tablenumber/:studentnumber/:phoneID', (req, res) => {
     "phone-id": phoneID
   };
 
-  // Add the registration object to the array
+  // Add the new attendance record to the array of records
   registos.push(registo);
 
-  // Return the registration object in the response
+  // Return the new attendance record as the response
   return res.status(200).json(registo);
 });
 
+// Define a route to handle HTTP GET requests to the "/table" path
 app.get('/table', (req, res) => {
-  // Return all registration objects in the response
+  // Return the array of attendance records as the response
   return res.status(200).json(registos);
 });
 
+// Define a function to get the current date in the format "DD-MM-YYYY"
 function getCurrentDate() {
   const now = new Date();
   const year = now.getFullYear();
@@ -59,6 +63,7 @@ function getCurrentDate() {
   return `${day}-${month}-${year}`;
 }
 
+// Define a function to get the current time in the format "HH:MM"
 function getCurrentTime() {
   const now = new Date();
   const hour = String(now.getHours()).padStart(2, '0');
@@ -66,15 +71,16 @@ function getCurrentTime() {
   return `${hour}:${minute}`;
 }
 
-
-// Configure HTTPS options
+// Define the HTTPS options for the server
 const options = {
   key: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.key'),
   cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.cert')
 };
 
+// Create an HTTPS server instance and start listening on port 3333
 https.createServer(options, app).listen(3333, () => {  
   console.log('Student server is running on port 3333. Class name = ' + serverClassName);
 });
+
 
 
