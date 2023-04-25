@@ -16,7 +16,9 @@ function toggleServer(state) {
     closeBtn.style.display = (state === 'running') ? 'block' : 'none';
     errorDiv.style.display = (state === 'running') ? 'none' : 'block';
     className.readOnly = (state === 'running') ? true : false;
-    className.value = (state === 'stopped') ? '' : className.value;
+    checkServerClassName().then(serverClassName => {
+        className.value = (state === 'stopped') ? '' : serverClassName;
+    });
     classLabel.innerHTML = (state === 'running') ? 'Class currently running:' : 'Enter class name:';
 }
 
@@ -45,6 +47,15 @@ function checkServerState() {
     fetch('/server-state')
     .then(response => response.text())
     .then(state => toggleServer(state));
+}
+
+function checkServerClassName() {
+  return fetch('/server-class')
+    .then(response => response.text())
+    .then(serverClassName => {
+        console.log('Server class name:', serverClassName);
+      return serverClassName;
+    });
 }
 
 function updateServerState(state) {

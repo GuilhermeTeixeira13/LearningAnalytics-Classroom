@@ -46,6 +46,10 @@ app.get('/server-state', (req, res) => {
   res.send(serverState);
 });
 
+app.get('/server-class', (req, res) => {
+  res.send(serverClassName);
+});
+
 app.post('/update-server-state', (req, res) => {
   const { state } = req.body;
   serverState = state;
