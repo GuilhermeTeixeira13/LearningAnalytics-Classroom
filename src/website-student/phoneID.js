@@ -18,14 +18,21 @@ window.onload = function() {
 	})
 	.then(response => response.text())
 	.then(html => {
-		// Create a new HTML element and insert the response HTML
-		const container = document.createElement('div');
-		container.innerHTML = html;
+		// Parse the response HTML into a Document object
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
 
-		document.body.innerHTML = '';
+		// Get the head and body elements from the Document object
+		const head = doc.head;
+		const body = doc.body;
 		
-		// Append the element to the DOM	
-		document.body.appendChild(container);
+		// Clear the current page's head and body elements
+		document.head.innerHTML = '';
+		document.body.innerHTML = '';
+
+		// Append the new head and body elements to the current page
+		document.head.appendChild(head);
+		document.body.appendChild(body);
 	})
 	.catch(error => {
 		console.error('Error:', error);
@@ -52,14 +59,21 @@ function handleSubmit(event) {
 	})
 	.then(response => response.text())
 	.then(html => {
-		// Create a new HTML element and insert the response HTML
-		const container = document.createElement('div');
-		container.innerHTML = html;
+		// Parse the response HTML into a Document object
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
 
+		// Get the head and body elements from the Document object
+		const head = doc.head;
+		const body = doc.body;
+		
+		// Clear the current page's head and body elements
+		document.head.innerHTML = '';
 		document.body.innerHTML = '';
 
-		// Append the element to the DOM	
-		document.body.appendChild(container);
+		// Append the new head and body elements to the current page
+		document.head.appendChild(head);
+		document.body.appendChild(body);
 	})
 	.catch(error => {
 		console.error('Error:', error);
