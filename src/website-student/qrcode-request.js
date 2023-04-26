@@ -18,6 +18,10 @@ function handleSubmit(event) {
     localStorage.setItem('MachineId', machineID);
   }
   
+  // Verificar se o número está presente na BD
+  
+  // Verificar se a aula está ativa naquela sala
+  
   // Student number and ID verification
   /*
    * // Ir buscar o machieID primeiramente associado ao studentNumber (firstMachineID)
