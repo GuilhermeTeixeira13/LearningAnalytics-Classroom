@@ -5,7 +5,7 @@
   "main": "src/teacher.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/teacher-server.js"
+    "start": "nodemon src/student-server.js"
   },
   "keywords": [],
   "author": "",

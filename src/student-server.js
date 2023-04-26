@@ -2,15 +2,10 @@
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
+const mime = require('mime');
 
 // Create an instance of the express application
 const app = express();
-
-// Get the server class name from the command line arguments
-const serverClassName = process.argv[2];
-
-// Serve static files from the "website-student" directory
-app.use(express.static(__dirname + '/website-student/'));
 
 // Enable JSON request parsing
 app.use(express.json());
@@ -22,11 +17,25 @@ const registos = [];
 // Define a route to handle HTTP POST requests to the "/table/:tablenumber/:studentnumber/:phoneID" path
 app.get('/:roomID/:table', (req, res) => {
   // Get the table number, student number and phone ID from the URL parameters
-  const roomID = req.params.studentnumber;
-  const table = req.params.tablenumber;
-
+  const roomID = req.params.roomID;
+  const table = req.params.table;
+  
+  console.log(roomID);
+  console.log(table);
+  
+  // Serve the index.html file
   res.sendFile(__dirname + '/website-student/index.html');
 });
+
+// Serve static files (excluding index.html) from the "website-student" directory for all other paths
+app.use(express.static(__dirname + '/website-student/', {
+  index: false,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 
 // Define the HTTPS options for the server
@@ -37,7 +46,7 @@ const options = {
 
 // Create an HTTPS server instance and start listening on port 3333
 https.createServer(options, app).listen(3333, () => {  
-  console.log('Student server is running on port 3333. Class name = ' + serverClassName);
+  console.log('Student server is running on port 3333.');
 });
 
 
