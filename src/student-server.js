@@ -8,10 +8,7 @@ const app = express();
 app.use(express.json());
 
 let phoneIds = []; 
-let classActive = null;
-let classLast = null;
-let roomID = null;
-let roomTable = null;
+let classActive, classLast, roomID, roomTable;
 
 app.get('/:roomID/:table', (req, res) => {
   roomID = req.params.roomID;
@@ -20,33 +17,25 @@ app.get('/:roomID/:table', (req, res) => {
   console.log("Room: " + roomID);
   console.log("Table: " + roomTable);
   
-  // Veriicar se o roomID existe na BD
-  const roomIDexists = true; // Função que retorna true se o roomID existe na BD
+  // Verify if roomID exists
+  const roomIDexists = true; // Function that returns true if roomID exists.
 
   if (roomIDexists === true) {
-    // roomID existe
+    // Verify what class of that room is currently active
+    classActive = 3; // Function that returns the classID, if null there isn't any class running.
     
-    // Verificar se alguma class daquela sala está ativa
-    classActive = 3; // Função que retorna o classID, se for null é pq n há nenhuma ativa
-    
-    
+    // Reset phoneId array whenever the class changes
     if ( classActive != classLast) {
         phoneIds = [];
         classLast = classActive;
     }
     
     if (classActive === null) {
-      // Não existe nenhuma class ativa
-      
       res.sendFile(__dirname + '/website-student/no-class.html');
     } else {
-      // Existe uma class ativa
-  
       res.sendFile(__dirname + '/website-student/index.html');
     }
   } else {
-    // roomID não existe
-    
     res.sendFile(__dirname + '/website-student/no-room.html');
   }
 
@@ -54,39 +43,41 @@ app.get('/:roomID/:table', (req, res) => {
 
 app.post('/verify-phoneID', (req, res) => {
   const { phoneID } = req.body;
+  
   console.log(`Verification -> Received phoneID: ${phoneID}`);
   
   if (phoneIds.includes(phoneID)) {
-    // O estudante já fez o registo de uma presença com o seu dispositivo
-    console.log(`Verification - O estudante já fez o registo de uma presença com o seu dispositivo`);
-
+    // The student already marked his or someone's attendance with that device.
+    console.log(`Verification - The student already marked his or someone's attendance with that device.`);
     res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
   } 
 });
 
 app.post('/register-studentNumber', (req, res) => {
   const { studentNumber, phoneID } = req.body;
+  
   console.log(`Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}`);
   
-  // Verificar se existe na BD
-  const studentID = 3; // Função que retorna o studentID, se for null é pq n existe
+  // Verify if the studentNumber is registred in the class.
+  const studentID = 3; // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
   
-  if ( studentID === null ) {
-      // O estudante que se está a tentar registar não está registado naquela aula
-      
-      console.log(`O estudante que se está a tentar registar não está registado naquela aula`);
-
+  if ( studentID === null ) { 
+      console.log(`There isn't any student ${studentNumber} registred in the class.`);
       res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
   } else {
     phoneIds.push(phoneID);
     
-    console.log(`Registado com sucesso! -> phoneIds: ` + phoneIds);
+    // LEFT ---> VERIFY IF TABLE IS ALREADY OCCUPIED
     
-    // Mudar tableStatus para ativo - roomID, roomTable
     
-    // Adicionar à tabela das presenças -studentID, classID
-
+    // IF NOT
+    console.log(`Successful registration! -> phoneIds: ` + phoneIds);
+    // DB: Change tableStatus to active - roomID, roomTablE
+    // DB: Add to presence table - studentID, classID
     res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
+    
+    
+    // IF YES
   }
 });
 
