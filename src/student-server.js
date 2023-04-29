@@ -76,8 +76,8 @@ app.post('/register-studentNumber', (req, res) => {
     phoneIds.push(phoneID);
   
     console.log(`Successful registration! -> phoneIds: ` + phoneIds);
-    // DB: Change tableStatus to active - roomID, roomTablE
     // DB: Add to presence table - studentID, classID
+    // DB: Change tableStatus to active - roomID, roomTablE
     res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
   }
 });
