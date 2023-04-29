@@ -14,6 +14,7 @@ app.get('/:roomID/:table', (req, res) => {
   roomID = req.params.roomID;
   roomTable = req.params.table;
   
+  console.log("------------------------");
   console.log("Room: " + roomID);
   console.log("Table: " + roomTable);
   
@@ -33,7 +34,14 @@ app.get('/:roomID/:table', (req, res) => {
     if (classActive === null) {
       res.sendFile(__dirname + '/website-student/no-class.html');
     } else {
-      res.sendFile(__dirname + '/website-student/index.html');
+      // Verify if table is already occupied
+      const tableOccupied = false; // Function that returns true if the table is already occupied.
+      
+      if ( tableOccupied ) {
+        res.sendFile(__dirname + '/website-student/table-occupied.html');
+      } else {
+        res.sendFile(__dirname + '/website-student/index.html');
+      }
     }
   } else {
     res.sendFile(__dirname + '/website-student/no-room.html');
@@ -66,18 +74,11 @@ app.post('/register-studentNumber', (req, res) => {
       res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
   } else {
     phoneIds.push(phoneID);
-    
-    // LEFT ---> VERIFY IF TABLE IS ALREADY OCCUPIED
-    
-    
-    // IF NOT
+  
     console.log(`Successful registration! -> phoneIds: ` + phoneIds);
     // DB: Change tableStatus to active - roomID, roomTablE
     // DB: Add to presence table - studentID, classID
     res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
-    
-    
-    // IF YES
   }
 });
 
