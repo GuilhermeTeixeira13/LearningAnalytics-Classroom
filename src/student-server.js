@@ -15,6 +15,12 @@ const connection = mysql.createConnection({
     database: 'your_database'
 });
 
+connection.on('error', function(err) {
+  console.log("AQUI");
+  console.error('Database connection error:', err);
+});
+
+
 let phoneIds = []; 
 let classActive, classLast, roomID, roomTable;
 
@@ -25,10 +31,13 @@ app.get('/:roomID/:table', (req, res) => {
   console.log("------------------------");
   console.log("Room: " + roomID);
   console.log("Table: " + roomTable);
+
   
   doesRoomIDExist(roomID, function(error, exists) {
     if (error) {
-      console.error(error);
+      console.log(`Database error!`);
+      //console.error(error);
+      res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
       return;
     } else {
       if (exists) {
@@ -38,7 +47,9 @@ app.get('/:roomID/:table', (req, res) => {
     
         getActiveClassID(roomID, function(error, activeClassID) {
           if (error) {
-            console.error(error);
+            console.log(`Database error!`);
+            //console.error(error);
+            res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
           }
           
@@ -53,7 +64,9 @@ app.get('/:roomID/:table', (req, res) => {
             // Verify if table is already occupied      
             isTableOccupied(roomID, roomTable, function(error, tableOccupied) {
               if (error) {
-                console.error(error);
+                console.log(`Database error!`);
+                //console.error(error);
+                res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
                 return;
               }
               
@@ -95,6 +108,13 @@ app.post('/register-studentNumber', (req, res) => {
   // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
   
   findStudentIDinClass(classActive, studentNumber, function(studentID) {
+    if (error) {
+      console.log(`Database error!`);
+      //console.error(error);
+      res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+      return;
+    }
+    
     if (studentID) {
       phoneIds.push(phoneID);
   
@@ -104,7 +124,9 @@ app.post('/register-studentNumber', (req, res) => {
       
       addRowToTable(['student_id', 'class_id', 'time_arrival'], [studentID, ClassActive, null], function(error, results) {
         if (error) {
-          console.error(error);
+          console.log(`Database error!`);
+          //console.error(error);
+          res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
           return;
         }
       });
@@ -113,7 +135,9 @@ app.post('/register-studentNumber', (req, res) => {
       
       updateTableStatus(roomID, roomTable, 'active', function(error, results) {
         if (error) {
-          console.error(error);
+          console.log(`Database error!`);
+          //console.error(error);
+          res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
           return;
         }
       });
@@ -155,7 +179,6 @@ function doesRoomIDExist(roomID, callback) {
 
   connection.query(query, values, function(error, results, fields) {
     if (error) {
-      console.error(error);
       return callback(error, null);
     }
 
@@ -175,7 +198,6 @@ function getActiveClassID(roomID, callback) {
 
   connection.query(query, values, function(error, results, fields) {
     if (error) {
-      console.error(error);
       return callback(error);
     }
     
@@ -194,7 +216,6 @@ function isTableOccupied(roomID, tableID, callback) {
 
   connection.query(query, [roomID, tableID], function(error, results, fields) {
     if (error) {
-      console.error(error);
       return callback(error);
     }
 
@@ -212,7 +233,9 @@ function findStudentIDinClass(classID, studentNumber, callback) {
   const query = `SELECT StudentID FROM tableName WHERE classID = '${classID}' AND StudentNumber = '${studentNumber}'`;
 
   connection.query(query, function(error, results, fields) {
-    if (error) throw error;
+    if (error) {
+      return callback(error);
+    }
     if (results.length > 0) {
       const studentID = results[0].StudentID;
       callback(studentID);
@@ -229,7 +252,6 @@ function addRowToTable(columnNames, values, callback) {
 
   connection.query(query, sanitizedValues, function(error, results, fields) {
     if (error) {
-      console.error(error);
       return callback(error);
     }
 
@@ -245,7 +267,6 @@ function updateTableStatus(room_id, room_table, status, callback) {
 
   connection.query(query, values, function(error, results, fields) {
     if (error) {
-      console.error(error);
       return callback(error);
     }
     
