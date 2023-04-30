@@ -3,9 +3,17 @@ const https = require('https');
 const fs = require('fs');
 const mime = require('mime');
 const path = require('path');
+const mysql = require('mysql');
 
 const app = express();
 app.use(express.json());
+
+const connection = mysql.createConnection({
+    host: 'your_host',
+    user: 'your_user',
+    password: 'your_password',
+    database: 'your_database'
+});
 
 let phoneIds = []; 
 let classActive, classLast, roomID, roomTable;
@@ -18,35 +26,52 @@ app.get('/:roomID/:table', (req, res) => {
   console.log("Room: " + roomID);
   console.log("Table: " + roomTable);
   
-  // Verify if roomID exists
-  const roomIDexists = true; // Function that returns true if roomID exists.
-
-  if (roomIDexists === true) {
-    // Verify what class of that room is currently active
-    classActive = 3; // Function that returns the classID, if null there isn't any class running.
-    
-    // Reset phoneId array whenever the class changes
-    if ( classActive != classLast) {
-        phoneIds = [];
-        classLast = classActive;
-    }
-    
-    if (classActive === null) {
-      res.sendFile(__dirname + '/website-student/no-class.html');
+  doesRoomIDExist(roomID, function(error, exists) {
+    if (error) {
+      console.error(error);
+      return;
     } else {
-      // Verify if table is already occupied
-      const tableOccupied = false; // Function that returns true if the table is already occupied.
-      
-      if ( tableOccupied ) {
-        res.sendFile(__dirname + '/website-student/table-occupied.html');
+      if (exists) {
+        
+        // Verify what class of that room is currently active
+        // Function that returns the active classID in that the roomID, if null there isn't any class running.
+    
+        getActiveClassID(roomID, function(error, activeClassID) {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          
+          // Reset phoneId array whenever the class changes
+          if ( classActive != classLast) {
+              phoneIds = [];
+              classLast = classActive;
+          }
+          
+          if (activeClassID) {
+            
+            // Verify if table is already occupied      
+            isTableOccupied(roomID, roomTable, function(error, tableOccupied) {
+              if (error) {
+                console.error(error);
+                return;
+              }
+              
+              if ( tableOccupied ) {
+                res.sendFile(path.join(__dirname, '/website-student/table-occupied.html'));
+              } else {
+                res.sendFile(path.join(__dirname, '/website-student/index.html'));
+              }
+            });
+          } else {
+            res.sendFile(path.join(__dirname, '/website-student/no-class.html'));
+          }
+        });
       } else {
-        res.sendFile(__dirname + '/website-student/index.html');
+        res.sendFile(path.join(__dirname, '/website-student/no-room.html'));
       }
     }
-  } else {
-    res.sendFile(__dirname + '/website-student/no-room.html');
-  }
-
+  });
 });
 
 app.post('/verify-phoneID', (req, res) => {
@@ -67,19 +92,38 @@ app.post('/register-studentNumber', (req, res) => {
   console.log(`Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}`);
   
   // Verify if the studentNumber is registred in the class.
-  const studentID = 3; // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
+  // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
   
-  if ( studentID === null ) { 
+  findStudentIDinClass(classActive, studentNumber, function(studentID) {
+    if (studentID) {
+      phoneIds.push(phoneID);
+  
+      console.log(`Successful registration! -> phoneIds: ` + phoneIds);
+      
+      // DB: Add presence to presence table - studentID, classID
+      
+      addRowToTable(['student_id', 'class_id', 'time_arrival'], [studentID, ClassActive, null], function(error, results) {
+        if (error) {
+          console.error(error);
+          return;
+        }
+      });
+      
+      // DB: Change tableStatus to active - roomID, roomTable
+      
+      updateTableStatus(roomID, roomTable, 'active', function(error, results) {
+        if (error) {
+          console.error(error);
+          return;
+        }
+      });
+      
+      res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
+    } else {
       console.log(`There isn't any student ${studentNumber} registred in the class.`);
       res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
-  } else {
-    phoneIds.push(phoneID);
-  
-    console.log(`Successful registration! -> phoneIds: ` + phoneIds);
-    // DB: Add to presence table - studentID, classID
-    // DB: Change tableStatus to active - roomID, roomTablE
-    res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
-  }
+    }
+  });
 });
 
 app.use(express.static(__dirname + '/website-student/', {
@@ -104,4 +148,107 @@ https.createServer(options, app).listen(3333, () => {
 });
 
 
+// Function that returns true if roomID exists and false if not.
+function doesRoomIDExist(roomID, callback) {
+  const query = `SELECT roomID FROM tableName WHERE roomID = ?`;
+  const values = [roomID];
 
+  connection.query(query, values, function(error, results, fields) {
+    if (error) {
+      console.error(error);
+      return callback(error, null);
+    }
+
+    if (results.length > 0) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  });
+}
+
+
+// Function that returns the active classID in that the roomID, if null there isn't any class running.
+function getActiveClassID(roomID, callback) {
+  const query = `SELECT classID FROM tableName WHERE roomID = ? AND classStatus = 'active'`;
+  const values = [roomID];
+
+  connection.query(query, values, function(error, results, fields) {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+    
+    if (results.length > 0) {
+      const activeClassID = results[0].classID;
+      callback(null, activeClassID);
+    } else {
+      callback(null, null);
+    }
+  });
+}
+
+// Function that checks if a table is occupied.
+function isTableOccupied(roomID, tableID, callback) {
+  const query = `SELECT table_status FROM tableName WHERE room_id = ? AND table_id = ?`;
+
+  connection.query(query, [roomID, tableID], function(error, results, fields) {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+
+    if (results.length > 0) {
+      const tableStatus = results[0].table_status;
+      callback(null, tableStatus === 'occupied');
+    } else {
+      callback(null, false);
+    }
+  });
+}
+
+// Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
+function findStudentIDinClass(classID, studentNumber, callback) {
+  const query = `SELECT StudentID FROM tableName WHERE classID = '${classID}' AND StudentNumber = '${studentNumber}'`;
+
+  connection.query(query, function(error, results, fields) {
+    if (error) throw error;
+    if (results.length > 0) {
+      const studentID = results[0].StudentID;
+      callback(studentID);
+    } else {
+      callback(null);
+    }
+  });
+}
+
+// Function that adds a new row to the specified table.
+function addRowToTable(columnNames, values, callback) {
+  const sanitizedValues = values.map(value => connection.escape(value));
+  const query = `INSERT INTO tableName (${columnNames.join(', ')}) VALUES (${sanitizedValues.map(v => '?').join(', ')})`;
+
+  connection.query(query, sanitizedValues, function(error, results, fields) {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+
+    callback(null, results);
+  });
+}
+
+
+// Function that updates the status of the specified table.
+function updateTableStatus(room_id, room_table, status, callback) {
+  const query = `UPDATE tableName SET table_status = ? WHERE room_id = ? AND room_table = ?`;
+  const values = [status, mysql.escape(room_id), mysql.escape(room_table)];
+
+  connection.query(query, values, function(error, results, fields) {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+    
+    callback(null, results);
+  });
+}
