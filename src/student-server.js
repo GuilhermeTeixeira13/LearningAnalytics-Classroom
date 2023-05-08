@@ -1,5 +1,5 @@
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const mime = require('mime');
 const path = require('path');
@@ -21,7 +21,8 @@ connection.on('error', function(err) {
 });
 
 
-let phoneIds = []; 
+let phoneIds = [];
+let studentNumbers = []; 
 let classActive, classLast, roomID, roomTable;
 
 app.get('/:roomID/:table', (req, res) => {
@@ -56,6 +57,7 @@ app.get('/:roomID/:table', (req, res) => {
           // Reset phoneId array whenever the class changes
           if ( classActive != classLast) {
               phoneIds = [];
+              studentNumbers = [];
               classLast = classActive;
           }
           
@@ -104,10 +106,13 @@ app.post('/register-studentNumber', (req, res) => {
   
   console.log(`Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}`);
   
-  // Verify if the studentNumber is registred in the class.
-  // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
-  
-  findStudentIDinClass(classActive, studentNumber, function(studentID) {
+  if (studentNumbers.includes(studentNumber)) {
+    res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
+  } else {
+    // Verify if the studentNumber is registred in the class.
+    // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
+    
+    findStudentIDinClass(classActive, studentNumber, function(studentID) {
     if (error) {
       console.log(`Database error!`);
       //console.error(error);
@@ -117,6 +122,7 @@ app.post('/register-studentNumber', (req, res) => {
     
     if (studentID) {
       phoneIds.push(phoneID);
+      studentNumbers.push(studentNumber);
   
       console.log(`Successful registration! -> phoneIds: ` + phoneIds);
       
@@ -148,6 +154,7 @@ app.post('/register-studentNumber', (req, res) => {
       res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
     }
   });
+  }
 });
 
 app.use(express.static(__dirname + '/website-student/', {
@@ -161,13 +168,8 @@ app.use(express.static(__dirname + '/website-student/', {
   }
 }));
 
-const options = {
-  key: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.key'),
-  cert: fs.readFileSync('/home/guilherme/Desktop/IoT_Attendance_Project/src/website-student/server.cert')
-};
 
-
-https.createServer(options, app).listen(3333, () => {  
+http.createServer(app).listen(3333, () => {  
   console.log('Student server is running on port 3333.');
 });
 
