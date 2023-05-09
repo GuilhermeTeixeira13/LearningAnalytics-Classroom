@@ -5,7 +5,7 @@ window.onload = function() {
 	phoneID = localStorage.getItem('phoneID');
 	if (!phoneID) {
 		// Generate a random UUID and store it in local storage
-		phoneID = crypto.randomUUID();
+		phoneID = uuidv4();
 		localStorage.setItem('phoneID', phoneID);
 	}
 	
