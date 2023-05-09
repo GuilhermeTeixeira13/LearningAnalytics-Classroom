@@ -30,7 +30,7 @@ app.get('/:roomID/:table', (req, res) => {
   
   doesRoomNameExist(roomName, function(error, roomIDquery) {
     if (error) {
-      console.log(`Database error!`);
+      console.log("Database error!");
       console.error(error);
       res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
       return;
@@ -40,13 +40,10 @@ app.get('/:roomID/:table', (req, res) => {
       if (roomID) {
         
         console.log("roomID: " + roomID);
-        
-        // Verify what class of that room is currently active
-        // Function that returns the active classID in that the roomID, if null there isn't any class running.
     
         getActiveClassAndUCID(roomName, function(error, classID, UCID) {
           if (error) {
-            console.log(`Database error! 1`);
+            console.log("Database error!");
             console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
@@ -57,7 +54,6 @@ app.get('/:roomID/:table', (req, res) => {
           classUC = UCID;
           console.log("UCID: " + UCID);
       
-          // Reset phoneId array whenever the class changes
           if ( classActive != classLast) {
               console.log("Class changed!");
               phoneIds = [];
@@ -68,11 +64,10 @@ app.get('/:roomID/:table', (req, res) => {
           if (classActive) {
             
             console.log("classActive: " + classActive );
-            
-            // Verify if table is already occupied      
+                
             isTableOccupied(roomID, roomTable, function(error, tableOccupied) {
               if (error) {
-                console.log(`Database error!`);
+                console.log("Database error!");
                 console.error(error);
                 res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
                 return;
@@ -102,11 +97,10 @@ app.get('/:roomID/:table', (req, res) => {
 app.post('/verify-phoneID', (req, res) => {
   const { phoneID } = req.body;
   
-  console.log(`Verification -> Received phoneID: ${phoneID}`);
+  console.log("Verification -> Received phoneID: ${phoneID}");
   
   if (phoneIds.includes(phoneID)) {
-    // The student already marked his or someone's attendance with that device.
-    console.log(`Verification - The student already marked his or someone's attendance with that device.`);
+    console.log("Verification - The student already marked his or someone's attendance with that device.");
     res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
   } 
 });
@@ -114,17 +108,15 @@ app.post('/verify-phoneID', (req, res) => {
 app.post('/register-studentNumber', (req, res) => {
   const { studentNumber, phoneID } = req.body;
   
-  console.log(`Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}`);
+  console.log("Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}");
   
   if (studentNumbers.includes(studentNumber)) {
     res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
   } else {
-    // Verify if the studentNumber is registred in the class.
-    // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
     
     findStudentIDinUC(classUC, studentNumber, function(error, studentID) {
       if (error) {
-        console.log(`Database error!`);
+        console.log("Database error!");
         console.error(error);
         res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
         return;
@@ -135,8 +127,6 @@ app.post('/register-studentNumber', (req, res) => {
         
         phoneIds.push(phoneID);
         studentNumbers.push(studentNumber);
-        
-        // DB: Add presence to presence table - studentID, classID
         
         addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActive, parseInt(roomTable, 10)], function(error, results) {
           if (error) {
@@ -149,8 +139,7 @@ app.post('/register-studentNumber', (req, res) => {
           console.log("StudentID " + studentID + ", classID " + classActive + " , roomTable " + roomTable + " added to student_logs table");
         });
         
-        // DB: Change tableStatus to active - roomID, roomTable
-        
+
         updateTableStatus(roomID, roomTable, 'occupied', function(error, results) {
           if (error) {
             console.log("Database error!");
