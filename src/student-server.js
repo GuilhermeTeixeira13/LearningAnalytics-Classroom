@@ -17,7 +17,7 @@ const connection = mysql.createConnection({
 
 let phoneIds = [];
 let studentNumbers = []; 
-let classActive, classLast, roomID, roomTable, roomName, classID;
+let classActive, classLast, roomID, roomTable, roomName, classID, classUC;
 
 app.get('/:roomID/:table', (req, res) => {
   roomName = req.params.roomID;
@@ -44,15 +44,18 @@ app.get('/:roomID/:table', (req, res) => {
         // Verify what class of that room is currently active
         // Function that returns the active classID in that the roomID, if null there isn't any class running.
     
-        getActiveClassID(roomName, function(error, classID) {
+        getActiveClassAndUCID(roomName, function(error, classID, UCID) {
           if (error) {
-            console.log(`Database error!`);
-            //console.error(error);
+            console.log(`Database error! 1`);
+            console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
           }
           
           classActive = classID;
+          
+          classUC = UCID;
+          console.log("UCID: " + UCID);
       
           // Reset phoneId array whenever the class changes
           if ( classActive != classLast) {
@@ -75,7 +78,7 @@ app.get('/:roomID/:table', (req, res) => {
                 return;
               }
               
-              console.log("Is " + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
+              console.log("Is table" + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
               
               if ( tableOccupied ) {
                 res.sendFile(path.join(__dirname, '/website-student/table-occupied.html'));
@@ -119,7 +122,7 @@ app.post('/register-studentNumber', (req, res) => {
     // Verify if the studentNumber is registred in the class.
     // Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
     
-    findStudentIDinClass(classActive, studentNumber, function(error, studentID) {
+    findStudentIDinUC(classUC, studentNumber, function(error, studentID) {
       if (error) {
         console.log(`Database error!`);
         console.error(error);
@@ -135,10 +138,10 @@ app.post('/register-studentNumber', (req, res) => {
         
         // DB: Add presence to presence table - studentID, classID
         
-        addRowToTable(['student_id', 'class_id', 'room_table'], [parseInt(studentID, 10), classActive, parseInt(roomTable, 10)], function(error, results) {
+        addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActive, parseInt(roomTable, 10)], function(error, results) {
           if (error) {
-            console.log("Database error!");
-            //console.error(error);
+            console.log("Database error! 1");
+            console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
           }
@@ -150,7 +153,7 @@ app.post('/register-studentNumber', (req, res) => {
         
         updateTableStatus(roomID, roomTable, 'occupied', function(error, results) {
           if (error) {
-            console.log("Database error!");
+            console.log("Database error! 2");
             //console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
@@ -162,7 +165,7 @@ app.post('/register-studentNumber', (req, res) => {
         console.log(`Successful registration! -> phoneIds: ` + phoneIds);
         res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
       } else {
-        console.log("There isn't any student ${studentNumber} registred in the class.");
+        console.log("There isn't any student " + studentNumber + " registred in the UC " + classUC + ".");
         res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
       }
     });
@@ -207,8 +210,8 @@ function doesRoomNameExist(roomname, callback) {
 
 
 // Function that returns the active classID in that the roomID, if null there isn't any class running.
-function getActiveClassID(roomName, callback) {
-  const query = `SELECT class_id FROM classes WHERE class_room = ? AND class_status = 'ativo'`;
+function getActiveClassAndUCID(roomName, callback) {
+  const query = `SELECT class_id, id_uc FROM classes WHERE class_room = ? AND class_status = 'ativo'`;
   const values = [roomName];
 
   connection.query(query, values, function(error, results, fields) {
@@ -218,12 +221,14 @@ function getActiveClassID(roomName, callback) {
     
     if (results.length > 0) {
       const activeClassID = results[0].class_id;
-      callback(null, activeClassID);
+      const UCID = results[0].id_uc;
+      callback(null, activeClassID, UCID);
     } else {
       callback(null, null);
     }
   });
 }
+
 
 // Function that checks if a table is occupied.
 function isTableOccupied(roomID, tableID, callback) {
@@ -243,21 +248,19 @@ function isTableOccupied(roomID, tableID, callback) {
   });
 }
 
-// Function that returns studentID. If null there isn't any student with that studentNumber registred in the class.
-function findStudentIDinClass(classID, studentNumber, callback) {
-  const query = `SELECT class_participants FROM class_logs WHERE class_id = '${classID}' AND class_participants = (
-  SELECT student_id FROM students WHERE student_number = '${studentNumber}'
-  )`;
+// Function that returns studentID. If null there isn't any student with that studentNumber registred in the UC.
+function findStudentIDinUC(UCID, studentNumber, callback) {
+  const query = `SELECT student_id FROM students WHERE id_UC = '${UCID}' AND student_number = '${studentNumber}'`;
   
   connection.query(query, function(error, results, fields) {
     if (error) {
       return callback(error);
     }
-    if (results && results.length > 0) { // Check if results is not null or undefined
-      const studentID = results[0].class_participants;
-      callback(null, studentID); // Call callback with null error and studentID
+    if (results && results.length > 0) { 
+      const studentID = results[0].student_id;
+      callback(null, studentID); 
     } else {
-      callback(null, null); // Call callback with null error and null studentID
+      callback(null, null); 
     }
   });
 }
