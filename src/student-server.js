@@ -31,7 +31,7 @@ app.get('/:roomID/:table', (req, res) => {
   doesRoomNameExist(roomName, function(error, roomIDquery) {
     if (error) {
       console.log(`Database error!`);
-      //console.error(error);
+      console.error(error);
       res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
       return;
     } else {
@@ -73,7 +73,7 @@ app.get('/:roomID/:table', (req, res) => {
             isTableOccupied(roomID, roomTable, function(error, tableOccupied) {
               if (error) {
                 console.log(`Database error!`);
-                //console.error(error);
+                console.error(error);
                 res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
                 return;
               }
@@ -140,7 +140,7 @@ app.post('/register-studentNumber', (req, res) => {
         
         addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActive, parseInt(roomTable, 10)], function(error, results) {
           if (error) {
-            console.log("Database error! 1");
+            console.log("Database error!");
             console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
@@ -153,8 +153,8 @@ app.post('/register-studentNumber', (req, res) => {
         
         updateTableStatus(roomID, roomTable, 'occupied', function(error, results) {
           if (error) {
-            console.log("Database error! 2");
-            //console.error(error);
+            console.log("Database error!");
+            console.error(error);
             res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
             return;
           }
@@ -162,7 +162,9 @@ app.post('/register-studentNumber', (req, res) => {
           console.log("Table " + roomTable + " in roomID " + roomID + " is now occupied in room_tables table");
         });
         
-        console.log(`Successful registration! -> phoneIds: ` + phoneIds);
+        console.log("Successful registration!");
+        console.log("phoneId's = " + phoneIds);
+        console.log("Students registred = " + studentNumbers);
         res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
       } else {
         console.log("There isn't any student " + studentNumber + " registred in the UC " + classUC + ".");
@@ -188,8 +190,6 @@ http.createServer(app).listen(3333, () => {
   console.log('Student server is running on port 3333.');
 });
 
-
-// Function that returns true if roomID exists and false if not.
 function doesRoomNameExist(roomname, callback) {
   const query = `SELECT room_id FROM rooms WHERE room_name = ?`;
   const values = [roomName];
@@ -208,8 +208,6 @@ function doesRoomNameExist(roomname, callback) {
   });
 }
 
-
-// Function that returns the active classID in that the roomID, if null there isn't any class running.
 function getActiveClassAndUCID(roomName, callback) {
   const query = `SELECT class_id, id_uc FROM classes WHERE class_room = ? AND class_status = 'ativo'`;
   const values = [roomName];
@@ -229,8 +227,6 @@ function getActiveClassAndUCID(roomName, callback) {
   });
 }
 
-
-// Function that checks if a table is occupied.
 function isTableOccupied(roomID, tableID, callback) {
   const query = `SELECT tablet_status FROM room_tables WHERE room_id = ? AND table_number = ?`;
 
@@ -248,7 +244,6 @@ function isTableOccupied(roomID, tableID, callback) {
   });
 }
 
-// Function that returns studentID. If null there isn't any student with that studentNumber registred in the UC.
 function findStudentIDinUC(UCID, studentNumber, callback) {
   const query = `SELECT student_id FROM students WHERE id_UC = '${UCID}' AND student_number = '${studentNumber}'`;
   
@@ -265,7 +260,6 @@ function findStudentIDinUC(UCID, studentNumber, callback) {
   });
 }
 
-// Function that adds a new row to the specified table.
 function addRowToTable(columnNames, values, callback) {
   const sanitizedValues = values.map(value => connection.escape(value));
   const query = `INSERT INTO student_logs (${columnNames.join(', ')}) VALUES (${sanitizedValues.map(v => '?').join(', ')})`;
@@ -279,8 +273,6 @@ function addRowToTable(columnNames, values, callback) {
   });
 }
 
-
-// Function that updates the status of the specified table.
 function updateTableStatus(room_id, room_table, status, callback) {
   const query = `UPDATE room_tables SET tablet_status = ? WHERE room_id = ? AND table_number = ?`;
   const values = [status, room_id, room_table];
