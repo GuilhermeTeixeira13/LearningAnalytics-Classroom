@@ -74,7 +74,7 @@ app.get('/:roomID/:table', (req, res) => {
               }
               
               if (tableID) {
-                console.log("TableID is " + tableID);
+                console.log("TableID: " + tableID);
                 
                 isTableOccupied(tableID, function(error, tableOccupied) {
                   if (error) {
@@ -124,7 +124,7 @@ app.post('/verify-phoneID', (req, res) => {
 app.post('/register-studentNumber', (req, res) => {
   const { studentNumber, phoneID } = req.body;
   
-  console.log("Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}");
+  console.log("Register - Received studentNumber: " + studentNumber + ", phoneID: " + phoneID);
   
   if (studentNumbers.includes(studentNumber)) {
     console.log("The student number " + studentNumber + " already marked his attendance.");

@@ -48,14 +48,18 @@ function handleSubmit(event) {
 	
 	const studentNumberInput = document.getElementById('student-number');
 	const studentNumber = studentNumberInput.value;
-	
-	if (studentNumber) {
+
+	// Check if studentNumber matches the required pattern
+	if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
+		// Capitalize the first letter of the studentNumber
+		const formattedStudentNumber = studentNumber.charAt(0).toUpperCase() + studentNumber.slice(1);
+
 		fetch('/register-studentNumber', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({ studentNumber, phoneID })
+			body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID })
 		})
 		.then(response => response.text())
 		.then(html => {
@@ -79,10 +83,7 @@ function handleSubmit(event) {
 			console.error('Error:', error);
 		});
 	} else {
-		window.alert('Student number is empty!');
+		window.alert('Invalid student number.');
 	}
-
-	
-	
-
 }
+
