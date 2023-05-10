@@ -25,7 +25,7 @@ app.get('/:roomID/:table', (req, res) => {
   
   console.log("------------------------");
   console.log("Room: " + roomName);
-  console.log("Table: " + roomTable);
+  console.log("Table Number: " + roomTable);
 
   
   doesRoomNameExist(roomName, function(error, roomIDquery) {
@@ -64,8 +64,8 @@ app.get('/:roomID/:table', (req, res) => {
           if (classActive) {
             
             console.log("classActive: " + classActive );
-                
-            isTableOccupied(roomID, roomTable, function(error, tableOccupied) {
+            
+            doesTableExists(roomID, roomTable, function(error, tableID) {
               if (error) {
                 console.log("Database error!");
                 console.error(error);
@@ -73,14 +73,30 @@ app.get('/:roomID/:table', (req, res) => {
                 return;
               }
               
-              console.log("Is table" + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
-              
-              if ( tableOccupied ) {
-                res.sendFile(path.join(__dirname, '/website-student/table-occupied.html'));
+              if (tableID) {
+                console.log("TableID is " + tableID);
+                
+                isTableOccupied(tableID, function(error, tableOccupied) {
+                  if (error) {
+                    console.log("Database error!");
+                    console.error(error);
+                    res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+                    return;
+                  }
+                  
+                  console.log("Is table " + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
+                  
+                  if ( tableOccupied ) {
+                    res.sendFile(path.join(__dirname, '/website-student/table-occupied.html'));
+                  } else {
+                    res.sendFile(path.join(__dirname, '/website-student/index.html'));
+                  }
+                });
               } else {
-                res.sendFile(path.join(__dirname, '/website-student/index.html'));
-              }
-            });
+                console.log("Table " + roomTable + " does not exist in room " + roomID);
+                res.sendFile(path.join(__dirname, '/website-student/no-table.html'));
+              }              
+            });         
           } else {
             console.log("No class active in room " +  roomName);
             res.sendFile(path.join(__dirname, '/website-student/no-class.html'));
@@ -97,7 +113,7 @@ app.get('/:roomID/:table', (req, res) => {
 app.post('/verify-phoneID', (req, res) => {
   const { phoneID } = req.body;
   
-  console.log("Verification -> Received phoneID: ${phoneID}");
+  console.log("Verification -> Received phoneID: " + phoneID);
   
   if (phoneIds.includes(phoneID)) {
     console.log("Verification - The student already marked his or someone's attendance with that device.");
@@ -111,6 +127,7 @@ app.post('/register-studentNumber', (req, res) => {
   console.log("Register - Received studentNumber: ${studentNumber}, phoneID: ${phoneID}");
   
   if (studentNumbers.includes(studentNumber)) {
+    console.log("The student number " + studentNumber + " already marked his attendance.");
     res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
   } else {
     
@@ -216,10 +233,27 @@ function getActiveClassAndUCID(roomName, callback) {
   });
 }
 
-function isTableOccupied(roomID, tableID, callback) {
-  const query = `SELECT tablet_status FROM room_tables WHERE room_id = ? AND table_number = ?`;
+function doesTableExists(roomID, tableNumber, callback) {
+  const query = `SELECT room_table_id FROM room_tables WHERE room_id = ? AND table_number = ?`;
 
-  connection.query(query, [roomID, tableID], function(error, results, fields) {
+  connection.query(query, [roomID, tableNumber], function(error, results, fields) {
+    if (error) {
+      return callback(error);
+    }
+
+    if (results.length > 0) {
+      const tableID = results[0].room_table_id;
+      callback(null, tableID);
+    } else {
+      callback(null, null);
+    }
+  });
+}
+
+function isTableOccupied(tableID, callback) {
+  const query = `SELECT tablet_status FROM room_tables WHERE room_table_id = ?`;
+
+  connection.query(query, [tableID], function(error, results, fields) {
     if (error) {
       return callback(error);
     }
