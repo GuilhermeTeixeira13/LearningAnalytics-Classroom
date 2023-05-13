@@ -7,6 +7,7 @@ const mysql = require('mysql');
 
 const app = express();
 app.use(express.json());
+app.set('view engine', 'ejs');
 
 const connection = mysql.createConnection({
     host: 'attendancedb.carkfyqrpaoi.eu-north-1.rds.amazonaws.com',
@@ -17,7 +18,7 @@ const connection = mysql.createConnection({
 
 let phoneIds = [];
 let studentNumbers = []; 
-let classActive, classLast, roomID, roomTable, roomName, classID, classUC;
+let classActive, classLast, roomID, roomTable, roomName, classID, classUC, msg;
 
 app.get('/:roomID/:table', (req, res) => {
   roomName = req.params.roomID;
@@ -32,7 +33,8 @@ app.get('/:roomID/:table', (req, res) => {
     if (error) {
       console.log("Database error!");
       console.error(error);
-      res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+      msg = 'We are experiencing problems with our DB, please be patient...';
+      res.render('response', { msg });
       return;
     } else {
       roomID = roomIDquery;
@@ -45,7 +47,8 @@ app.get('/:roomID/:table', (req, res) => {
           if (error) {
             console.log("Database error!");
             console.error(error);
-            res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+            msg = 'We are experiencing problems with our DB, please be patient...';
+            res.render('response', { msg });
             return;
           }
           
@@ -69,7 +72,8 @@ app.get('/:roomID/:table', (req, res) => {
               if (error) {
                 console.log("Database error!");
                 console.error(error);
-                res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+                msg = 'We are experiencing problems with our DB, please be patient...';
+                res.render('response', { msg });
                 return;
               }
               
@@ -80,31 +84,36 @@ app.get('/:roomID/:table', (req, res) => {
                   if (error) {
                     console.log("Database error!");
                     console.error(error);
-                    res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+                    msg = 'We are experiencing problems with our DB, please be patient...';
+                    res.render('response', { msg });
                     return;
                   }
                   
                   console.log("Is table " + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
                   
                   if ( tableOccupied ) {
-                    res.sendFile(path.join(__dirname, '/website-student/table-occupied.html'));
+                    msg = 'It looks like your desk is already being occupied by another student!';
+                    res.render('response', { msg });
                   } else {
                     res.sendFile(path.join(__dirname, '/website-student/index.html'));
                   }
                 });
               } else {
                 console.log("Table " + roomTable + " does not exist in room " + roomID);
-                res.sendFile(path.join(__dirname, '/website-student/no-table.html'));
+                msg = 'Seems like this table is does not exist in this room!';
+                res.render('response', { msg });
               }              
             });         
           } else {
             console.log("No class active in room " +  roomName);
-            res.sendFile(path.join(__dirname, '/website-student/no-class.html'));
+            msg = 'No class active in room ' +  roomName;
+            res.render('response', { msg });
           }
         });
       } else {
         console.log("No roomID for roomName " + roomName);
-        res.sendFile(path.join(__dirname, '/website-student/no-room.html'));
+        msg = 'This room does not exist!';
+        res.render('response', { msg });
       }
     }
   });
@@ -117,7 +126,8 @@ app.post('/verify-phoneID', (req, res) => {
   
   if (phoneIds.includes(phoneID)) {
     console.log("Verification - The student already marked his or someone's attendance with that device.");
-    res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
+    msg = 'You already marked your attendance to this class!';
+    res.render('response', { msg });
   } 
 });
 
@@ -128,28 +138,25 @@ app.post('/register-studentNumber', (req, res) => {
   
   if (studentNumbers.includes(studentNumber)) {
     console.log("The student number " + studentNumber + " already marked his attendance.");
-    res.sendFile(path.join(__dirname, '/website-student/already-registred.html'));
+    res.render('response', { msg: 'ou already marked your attendance to this class!' });
   } else {
     
     findStudentIDinUC(classUC, studentNumber, function(error, studentID) {
       if (error) {
         console.log("Database error!");
         console.error(error);
-        res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+        res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
         return;
       }
       
       if (studentID) {
         console.log("The studentNumber " + studentNumber + " has a studentID of: " + studentID);
         
-        phoneIds.push(phoneID);
-        studentNumbers.push(studentNumber);
-        
         addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActive, parseInt(roomTable, 10)], function(error, results) {
           if (error) {
             console.log("Database error!");
             console.error(error);
-            res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+            res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
             return;
           }
           
@@ -161,20 +168,24 @@ app.post('/register-studentNumber', (req, res) => {
           if (error) {
             console.log("Database error!");
             console.error(error);
-            res.sendFile(path.join(__dirname, '/website-student/db-error.html'));
+            res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
             return;
           }
           
           console.log("Table " + roomTable + " in roomID " + roomID + " is now occupied in room_tables table");
         });
         
-        console.log("Successful registration!");
+        phoneIds.push(phoneID);
+        studentNumbers.push(studentNumber);
+        
         console.log("phoneId's = " + phoneIds);
         console.log("Students registred = " + studentNumbers);
-        res.sendFile(path.join(__dirname, '/website-student/successful-registration.html'));
+        console.log("Successful registration!");
+        
+        res.render('response', { msg: 'Thanks for your registration!' });
       } else {
         console.log("There isn't any student " + studentNumber + " registred in the UC " + classUC + ".");
-        res.sendFile(path.join(__dirname, '/website-student/not-in-the-class.html'));
+        res.render('response', { msg: 'Seems like you are not registred in this class!' });
       }
     });
   }

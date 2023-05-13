@@ -8,6 +8,7 @@ window.onload = function() {
 		phoneID = uuidv4();
 		localStorage.setItem('phoneID', phoneID);
 	}
+
 	
 	fetch('/verify-phoneID', {
 		method: 'POST',
@@ -16,74 +17,51 @@ window.onload = function() {
 		},
 		body: JSON.stringify({ phoneID })
 	})
-	.then(response => response.text())
-	.then(html => {
-		// Parse the response HTML into a Document object
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(html, 'text/html');
-
-		// Get the head and body elements from the Document object
-		const head = doc.head;
-		const body = doc.body;
-		
-		// Clear the current page's head and body elements
-		document.head.innerHTML = '';
-		document.body.innerHTML = '';
-
-		// Append the new head and body elements to the current page
-		document.head.appendChild(head);
-		document.body.appendChild(body);
-	})
-	.catch(error => {
-		console.error('Error:', error);
-	});
+	.then(response => {
+      response.text().then(html => {
+        // Replace the content of the current page with the response HTML
+        document.documentElement.innerHTML = html;
+      });
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
 
 }
 
 
-// Register attendance
 function handleSubmit(event) {
-	// Prevent the default form submission behavior
-	event.preventDefault();
-	
-	const studentNumberInput = document.getElementById('student-number');
-	const studentNumber = studentNumberInput.value;
+  // Prevent the default form submission behavior
+  event.preventDefault();
 
-	// Check if studentNumber matches the required pattern
-	if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
-		// Capitalize the first letter of the studentNumber
-		const formattedStudentNumber = studentNumber.charAt(0).toUpperCase() + studentNumber.slice(1);
+  const studentNumberInput = document.getElementById('student-number');
+  const studentNumber = studentNumberInput.value;
 
-		fetch('/register-studentNumber', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID })
-		})
-		.then(response => response.text())
-		.then(html => {
-			// Parse the response HTML into a Document object
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, 'text/html');
+  // Check if studentNumber matches the required pattern
+  if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
+    // Capitalize the first letter of the studentNumber
+    const formattedStudentNumber = studentNumber.charAt(0).toUpperCase() + studentNumber.slice(1);
 
-			// Get the head and body elements from the Document object
-			const head = doc.head;
-			const body = doc.body;
-			
-			// Clear the current page's head and body elements
-			document.head.innerHTML = '';
-			document.body.innerHTML = '';
-
-			// Append the new head and body elements to the current page
-			document.head.appendChild(head);
-			document.body.appendChild(body);
-		})
-		.catch(error => {
-			console.error('Error:', error);
-		});
-	} else {
-		window.alert('Invalid student number.');
-	}
+    fetch('/register-studentNumber', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID })
+    })
+    .then(response => {
+      response.text().then(html => {
+        // Replace the content of the current page with the response HTML
+        document.documentElement.innerHTML = html;
+      });
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  }
 }
+
+
+
+
 
