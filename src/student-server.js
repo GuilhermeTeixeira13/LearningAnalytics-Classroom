@@ -9,11 +9,16 @@ const app = express();
 app.use(express.json());
 app.set('view engine', 'ejs');
 
+const dotenv = require('dotenv');
+const envPath = path.join('/home/guilherme/Desktop/IoT_Attendance_Project/src', '..', '.env');
+dotenv.config({ path: envPath });
+
+
 const connection = mysql.createConnection({
-    host: 'attendancedb.carkfyqrpaoi.eu-north-1.rds.amazonaws.com',
-    user: 'admin',
-    password: 'adminattendancepw',
-    database: 'attendancedb'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 });
 
 let phoneIds = [];
@@ -33,8 +38,7 @@ app.get('/:roomID/:table', (req, res) => {
     if (error) {
       console.log("Database error!");
       console.error(error);
-      msg = 'We are experiencing problems with our DB, please be patient...';
-      res.render('response', { msg });
+      res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
       return;
     } else {
       roomID = roomIDquery;
@@ -47,8 +51,7 @@ app.get('/:roomID/:table', (req, res) => {
           if (error) {
             console.log("Database error!");
             console.error(error);
-            msg = 'We are experiencing problems with our DB, please be patient...';
-            res.render('response', { msg });
+            res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
             return;
           }
           
@@ -72,8 +75,7 @@ app.get('/:roomID/:table', (req, res) => {
               if (error) {
                 console.log("Database error!");
                 console.error(error);
-                msg = 'We are experiencing problems with our DB, please be patient...';
-                res.render('response', { msg });
+                res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
                 return;
               }
               
@@ -84,36 +86,31 @@ app.get('/:roomID/:table', (req, res) => {
                   if (error) {
                     console.log("Database error!");
                     console.error(error);
-                    msg = 'We are experiencing problems with our DB, please be patient...';
-                    res.render('response', { msg });
+                    res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
                     return;
                   }
                   
                   console.log("Is table " + roomTable + " occupied in room " + roomID + "? : " + tableOccupied);
                   
                   if ( tableOccupied ) {
-                    msg = 'It looks like your desk is already being occupied by another student!';
-                    res.render('response', { msg });
+                    res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
                   } else {
                     res.sendFile(path.join(__dirname, '/website-student/index.html'));
                   }
                 });
               } else {
                 console.log("Table " + roomTable + " does not exist in room " + roomID);
-                msg = 'Seems like this table is does not exist in this room!';
-                res.render('response', { msg });
+                res.render('response', { msg: 'Seems like this table is does not exist in this room!' });
               }              
             });         
           } else {
             console.log("No class active in room " +  roomName);
-            msg = 'No class active in room ' +  roomName;
-            res.render('response', { msg });
+            res.render('response', { msg: 'No class active in room ' +  roomName });
           }
         });
       } else {
         console.log("No roomID for roomName " + roomName);
-        msg = 'This room does not exist!';
-        res.render('response', { msg });
+        res.render('response', { msg: 'This room does not exist!' });
       }
     }
   });
@@ -126,8 +123,7 @@ app.post('/verify-phoneID', (req, res) => {
   
   if (phoneIds.includes(phoneID)) {
     console.log("Verification - The student already marked his or someone's attendance with that device.");
-    msg = 'You already marked your attendance to this class!';
-    res.render('response', { msg });
+    res.render('response', { msg: 'You already marked your attendance to this class!' });
   } 
 });
 
