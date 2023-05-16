@@ -13,7 +13,6 @@ const dotenv = require('dotenv');
 const envPath = path.join('/home/guilherme/Desktop/IoT_Attendance_Project/src', '..', '.env');
 dotenv.config({ path: envPath });
 
-
 const connection = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -187,7 +186,7 @@ app.post('/register-studentNumber', (req, res) => {
   }
 });
 
-app.use(express.static(__dirname + '/website-student/', {
+app.use(express.static(__dirname + '/website-student/style/', {
   index: false,
   setHeaders: (res, path) => {
     if (path.endsWith('.css')) {

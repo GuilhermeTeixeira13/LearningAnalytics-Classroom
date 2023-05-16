@@ -1,0 +1,44 @@
+/* CSS styles for Student Attendance EJS webpage */
+
+/* Reset default browser styles */
+body, h1 {
+  margin: 0;
+  padding: 0;
+}
+
+/* Set a background color */
+body {
+  background-color: #f4f4f4;
+}
+
+/* Center the content vertically and horizontally */
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+/* Style the heading */
+h1 {
+  font-size: 32px;
+  color: #333;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin-bottom: 20px;
+}
+
+/* Add some padding and a box shadow to the heading */
+h1 {
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+/* Apply responsive styles */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 24px;
+    padding: 10px;
+  }
+}
