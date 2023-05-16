@@ -99,7 +99,7 @@ app.get('/:roomID/:table', (req, res) => {
                 });
               } else {
                 console.log("Table " + roomTable + " does not exist in room " + roomID);
-                res.render('response', { msg: 'Seems like this table is does not exist in this room!' });
+                res.render('response', { msg: 'Seems like this table does not exist in this room!' });
               }              
             });         
           } else {
@@ -180,7 +180,7 @@ app.post('/register-studentNumber', (req, res) => {
         res.render('response', { msg: 'Thanks for your registration!' });
       } else {
         console.log("There isn't any student " + studentNumber + " registred in the UC " + classUC + ".");
-        res.render('response', { msg: 'Seems like you are not registred in this class!' });
+        res.render('response', { msg: 'Seems like you are not registered in the UC!' });
       }
     });
   }
