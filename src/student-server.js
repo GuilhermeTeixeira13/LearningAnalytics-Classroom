@@ -133,7 +133,7 @@ app.post('/register-studentNumber', (req, res) => {
   
   if (studentNumbers.includes(studentNumber)) {
     console.log("The student number " + studentNumber + " already marked his attendance.");
-    res.render('response', { msg: 'ou already marked your attendance to this class!' });
+    res.render('response', { msg: 'You already marked your attendance to this class!' });
   } else {
     
     findStudentIDinUC(classUC, studentNumber, function(error, studentID) {
@@ -186,7 +186,7 @@ app.post('/register-studentNumber', (req, res) => {
   }
 });
 
-app.use(express.static(__dirname + '/website-student/style/', {
+app.use(express.static(__dirname + '/website-student/', {
   index: false,
   setHeaders: (res, path) => {
     if (path.endsWith('.css')) {
