@@ -28,11 +28,9 @@ app.get('/:roomID/:table', (req, res) => {
   let roomName = req.params.roomID;
   let roomTable = req.params.table;
   
-  console.log("------------------------");
   console.log("Room: " + roomName);
   console.log("Table Number: " + roomTable);
 
-  
   doesRoomNameExist(roomName, function(error, roomID) {
     if (error) {
       console.log("Database error!");
@@ -117,10 +115,10 @@ app.get('/:roomID/:table', (req, res) => {
 app.post('/verify-phoneID', (req, res) => {
   const { phoneID } = req.body;
   
-  console.log("Verification -> Received phoneID: " + phoneID);
+  console.log("/verify-phoneID > Received phoneID: " + phoneID);
   
   if (phoneIds.includes(phoneID)) {
-    console.log("Verification - The student already marked his or someone's attendance with that device.");
+    console.log("/verify-phoneID > The student already marked his or someone's attendance with that device.");
     res.render('response', { msg: 'You already marked your attendance to this class!' });
   } 
 });
@@ -128,7 +126,11 @@ app.post('/verify-phoneID', (req, res) => {
 app.post('/register-studentNumber', (req, res) => {
   const { studentNumber, phoneID, roomTable, roomID, tableID } = req.body;
   
-  console.log("Register - Received studentNumber: " + studentNumber + ", phoneID: " + phoneID);
+  console.log("/register-studentNumber > Received studentNumber: " + studentNumber);
+  console.log("/register-studentNumber > Received phoneID: " + phoneID);
+  console.log("/register-studentNumber > Received roomTable: " + roomTable);
+  console.log("/register-studentNumber > Received roomID): " + roomID);
+  console.log("/register-studentNumber > Received tableID): " + tableID);
   
   if (studentNumbers.includes(studentNumber)) {
     console.log("The student number " + studentNumber + " already marked his attendance.");
