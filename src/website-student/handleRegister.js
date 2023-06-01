@@ -1,5 +1,4 @@
 function handleSubmit(event) {
-  // Prevent the default form submission behavior
   event.preventDefault();
 
   const studentNumberInput = document.getElementById('student-number');
@@ -9,9 +8,7 @@ function handleSubmit(event) {
   const tableID = document.getElementById('tableID').innerHTML;
   const classActiveStart = document.getElementById('classActiveID').innerHTML;
 
-  // Check if studentNumber matches the required pattern
   if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
-    // Capitalize the first letter of the studentNumber
     const formattedStudentNumber = studentNumber.charAt(0).toUpperCase() + studentNumber.slice(1);
 
     fetch('/register-studentNumber', {
@@ -23,12 +20,13 @@ function handleSubmit(event) {
     })
     .then(response => {
       response.text().then(html => {
-        // Replace the content of the current page with the response HTML
         document.documentElement.innerHTML = html;
       });
     })
     .catch(error => {
       console.error('Error:', error);
     });
+  } else {
+    window.alert('The student number must start with a letter followed by one or more digits.');
   }
 }
