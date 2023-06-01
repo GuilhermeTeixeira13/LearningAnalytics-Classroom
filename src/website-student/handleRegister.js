@@ -7,6 +7,7 @@ function handleSubmit(event) {
   const roomTable = document.getElementById('roomTable').innerHTML;
   const roomID = document.getElementById('roomID').innerHTML;
   const tableID = document.getElementById('tableID').innerHTML;
+  const classActiveStart = document.getElementById('classActiveID').innerHTML;
 
   // Check if studentNumber matches the required pattern
   if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
@@ -18,7 +19,7 @@ function handleSubmit(event) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID, roomTable, roomID, tableID })
+      body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID, roomTable, roomID, tableID, classActiveStart })
     })
     .then(response => {
       response.text().then(html => {
