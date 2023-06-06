@@ -56,63 +56,61 @@ function handleGetRequest(req, res) {
       return;
     }
 
-    if (roomID) {
-      console.log(`/${roomName}/${roomTable} > roomID: ${roomID}`);
+    if (!roomID) {
+      console.log(`/${roomName}/${roomTable} > No roomID for roomName ${roomName}`);
+      return res.render('response', { msg: 'This room does not exist!' });
+    }
 
-      getActiveClassAndUCID(roomName, (error, classID, UCID) => {
+    console.log(`/${roomName}/${roomTable} > roomID: ${roomID}`);
+    getActiveClassAndUCID(roomName, (error, classID, UCID) => {
+      if (error) {
+        handleError(res);
+        return;
+      }
+
+      classActiveID = classID;
+      classUCID = UCID;
+
+      console.log(`/${roomName}/${roomTable} > classActiveID: ${classActiveID}`);
+      console.log(`/${roomName}/${roomTable} > classUCID: ${classUCID}`);
+
+      if (classActiveID != classLastID) {
+        handleClassChange();
+      }
+
+      if (!classActiveID) {
+        console.log(`/${roomName}/${roomTable} > No class active in room ${roomName}`);
+        return res.render('response', { msg: 'No class active in room ' + roomName });
+      }
+
+      doesTableExists(roomID, roomTable, (error, tableID) => {
         if (error) {
           handleError(res);
           return;
         }
 
-        classActiveID = classID;
-        classUCID = UCID;
-
-        console.log(`/${roomName}/${roomTable} > classActiveID: ${classActiveID}`);
-        console.log(`/${roomName}/${roomTable} > classUCID: ${classUCID}`);
-
-        if (classActiveID != classLastID) {
-          handleClassChange();
+        if (!tableID) {
+          console.log(`/${roomName}/${roomTable} > Table ${roomTable} does not exist in room ${roomID}`);
+          return res.render('response', { msg: 'Seems like this table does not exist in this room!' });
         }
 
-        if (classActiveID) {
-          doesTableExists(roomID, roomTable, (error, tableID) => {
-            if (error) {
-              handleError(res);
-              return;
-            }
+        console.log(`/${roomName}/${roomTable} > TableID: ${tableID}`);
+        isTableOccupied(tableID, (error, tableOccupied) => {
+          if (error) {
+            handleError(res);
+            return;
+          }
 
-            if (tableID) {
-              console.log(`/${roomName}/${roomTable} > TableID: ${tableID}`);
+          console.log(`/${roomName}/${roomTable} > Is table ${roomTable} occupied in room ${roomID}? : ${tableOccupied}`);
 
-              isTableOccupied(tableID, (error, tableOccupied) => {
-                if (error) {
-                  handleError(res);
-                  return;
-                }
-
-                console.log(`/${roomName}/${roomTable} > Is table ${roomTable} occupied in room ${roomID}? : ${tableOccupied}`);
-
-                if (tableOccupied) {
-                  res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
-                } else {
-                  res.render('index', { roomID, roomTable, tableID, classActiveID });
-                }
-              });
-            } else {
-              console.log(`/${roomName}/${roomTable} > Table ${roomTable} does not exist in room ${roomID}`);
-              res.render('response', { msg: 'Seems like this table does not exist in this room!' });
-            }
-          });
-        } else {
-          console.log(`/${roomName}/${roomTable} > No class active in room ${roomName}`);
-          res.render('response', { msg: 'No class active in room ' + roomName });
-        }
+          if (tableOccupied) {
+            res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
+          } else {
+            res.render('index', { roomID, roomTable, tableID, classActiveID });
+          }
+        });
       });
-    } else {
-      console.log(`/${roomName}/${roomTable} > No roomID for roomName ${roomName}`);
-      res.render('response', { msg: 'This room does not exist!' });
-    }
+    });
   });
 
   function handleError(res) {
@@ -127,6 +125,7 @@ function handleGetRequest(req, res) {
     classLastID = classActiveID;
   }
 }
+
 
 function handleVerifyPhoneID(req, res) {
   const { phoneID } = req.body;
@@ -150,67 +149,60 @@ function handleRegisterStudentNumber(req, res) {
 
   if (studentNumbers.includes(studentNumber)) {
     console.log(`/register-studentNumber > The student number ${studentNumber} already marked his attendance.`);
-    res.render('response', { msg: 'You already marked your attendance to this class!' });
-    return;
+    return res.render('response', { msg: 'You already marked your attendance to this class!' });
   }
 
   if (classActiveStart != classActiveID) {
     console.log(`/register-studentNumber > The class is not active anymore! You took too long!`);
-    res.render('response', { msg: 'The class is not active anymore! You took too long!' });
-    return;
+    return res.render('response', { msg: 'The class is not active anymore! You took too long!' });
   }
 
   findStudentIDinUC(classUCID, studentNumber, (error, studentID) => {
     if (error) {
-      handleError(res);
-      return;
+      return handleError(res);
     }
 
     if (!studentID) {
       console.log(`/register-studentNumber > There isn't any student ${studentNumber} registered in the UC ${classUCID}.`);
-      res.render('response', { msg: 'Seems like you are not registered in the UC!' });
-      return;
+      return res.render('response', { msg: 'Seems like you are not registered in the UC!' });
     }
 
     console.log(`/register-studentNumber > The studentNumber ${studentNumber} has a studentID of: ${studentID}`);
 
     isTableOccupied(tableID, (error, tableOccupied) => {
       if (error) {
-        handleError(res);
-        return;
+        return handleError(res);
       }
 
       console.log(`/register-studentNumber > Is table ${roomTable} occupied in room ${roomID}? : ${tableOccupied}`);
 
       if (tableOccupied) {
-        res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
-      } else {
-        addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActiveID, parseInt(roomTable, 10)], (error, results) => {
-          if (error) {
-            handleError(res);
-            return;
-          } else {
-            console.log(`/register-studentNumber > [StudentID:${studentID}, classID:${classActiveID}, roomTable:${roomTable}] added to student_logs table`);
-          }
-        });
-
-        updateTableStatus(roomID, roomTable, 'occupied', (error, results) => {
-          if (error) {
-            handleError(res);
-            return;
-          } else {
-            console.log(`/register-studentNumber > Desk ${roomTable} in roomID ${roomID} is now occupied in room_tables table`);
-            console.log(`/register-studentNumber > Successful registration!`);
-          }
-        });
-
-        phoneIds.push(phoneID);
-        studentNumbers.push(studentNumber);
-
-        console.log(`/register-studentNumber > phoneId's = ${phoneIds}`);
-        console.log(`/register-studentNumber > Students registered = ${studentNumbers}`);
-        res.render('response', { msg: 'Thanks for your registration!' });
+        return res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
       }
+
+      addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActiveID, parseInt(roomTable, 10)], (error, results) => {
+        if (error) {
+          return handleError(res);
+        } else {
+          console.log(`/register-studentNumber > [StudentID:${studentID}, classID:${classActiveID}, roomTable:${roomTable}] added to student_logs table`);
+        }
+      });
+
+      updateTableStatus(roomID, roomTable, 'occupied', (error, results) => {
+        if (error) {
+          return handleError(res);
+        } else {
+          console.log(`/register-studentNumber > Desk ${roomTable} in roomID ${roomID} is now occupied in room_tables table`);
+          console.log(`/register-studentNumber > Successful registration!`);
+        }
+      });
+
+      phoneIds.push(phoneID);
+      studentNumbers.push(studentNumber);
+
+      console.log(`/register-studentNumber > phoneId's = ${phoneIds}`);
+      console.log(`/register-studentNumber > Students registered = ${studentNumbers}`);
+      res.render('response', { msg: 'Thanks for your registration!' });
     });
   });
 
@@ -219,6 +211,7 @@ function handleRegisterStudentNumber(req, res) {
     res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
   }
 }
+
 
 function doesRoomNameExist(roomName, callback) {
   const query = `SELECT room_id FROM rooms WHERE room_name = ?`;
