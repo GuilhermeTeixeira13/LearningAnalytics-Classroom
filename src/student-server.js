@@ -1,18 +1,26 @@
-const express = require('express');
-const http = require('http');
-const fs = require('fs');
-const mime = require('mime');
-const path = require('path');
-const mysql = require('mysql');
+// Import required modules
+const express = require('express'); // Express web framework
+const http = require('http'); // HTTP module for creating a server
+const fs = require('fs'); // File system module for file operations
+const mime = require('mime'); // Mime module for working with MIME types
+const path = require('path'); // Path module for working with file paths
+const mysql = require('mysql'); // MySQL module for database operations
 
+// Create an instance of the Express application
 const app = express();
+
+// Middleware to parse incoming JSON data
 app.use(express.json());
+
+// Set the view engine to EJS (Embedded JavaScript templates)
 app.set('view engine', 'ejs');
 
+// Load environment variables from the .env file in the specified path
 const dotenv = require('dotenv');
 const envPath = path.join('/home/guilherme/Desktop/IoT_Attendance_Project/src', '..', '.env');
 dotenv.config({ path: envPath });
 
+// Create a MySQL database connection using environment variables
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,17 +28,21 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME
 });
 
-let phoneIds = [];
-let studentNumbers = [];
-let classActiveID, classLastID, classUCID, msg;
+// Declare some global variables
+let phoneIds = []; // An array to store phone IDs from the current class
+let studentNumbers = []; // An array to store student numbers from the current class
+let activeClassID, lastClassID, classCourseID, msg; // Some variables for class-related data
 
-app.get('/:roomName/:table', handleGetRequest);
-app.post('/verify-phoneID', handleVerifyPhoneID);
-app.post('/register-studentNumber', handleRegisterStudentNumber);
+// Set up routes and their corresponding handlers
+app.get('/:classroomName/:table', handleQRcodeRequest); // GET request handler - QRCODE reading
+app.post('/verify-phoneID', handleVerifyPhoneID); // POST request handler for phone ID verification - When form page is onLoad()
+app.post('/register-studentNumber', handleRegisterStudentNumber); // POST request handler for registering student attendance - When the student clicks in the register button
 
+// Serve static files (CSS and JS) from the 'website-student' directory
 app.use(express.static(__dirname + '/website-student/', {
   index: false,
   setHeaders: (res, path) => {
+    // Set appropriate Content-Type headers for CSS and JS files
     if (path.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
     } else if (path.endsWith('.js')) {
@@ -39,289 +51,370 @@ app.use(express.static(__dirname + '/website-student/', {
   }
 }));
 
+// Create an HTTP server to listen on port 3333
 http.createServer(app).listen(3333, () => {
   console.log('Student server is running on port 3333.');
 });
 
-function handleGetRequest(req, res) {
-  const roomName = req.params.roomName;
-  const roomTable = req.params.table;
+function handleQRcodeRequest(req, res) {
+  // Extract classroomName and classroomTable from request parameters
+  const classroomName = req.params.classroomName;
+  const classroomTable = req.params.table;
 
-  console.log(`/${roomName}/${roomTable} > Room: ${roomName}`);
-  console.log(`/${roomName}/${roomTable} > Table Number: ${roomTable}`);
+  // Log classroomName and classroomTable for debugging purposes
+  console.log(`/${classroomName}/${classroomTable} > Room: ${classroomName}`);
+  console.log(`/${classroomName}/${classroomTable} > Table Number: ${classroomTable}`);
 
-  doesRoomNameExist(roomName, (error, roomID) => {
+  // Check if the given classroomName exists in the database
+  doesRoomNameExist(classroomName, (error, classroomID) => {
     if (error) {
       handleError(res);
       return;
     }
 
-    if (!roomID) {
-      console.log(`/${roomName}/${roomTable} > No roomID for roomName ${roomName}`);
-      return res.render('response', { msg: 'This room does not exist!' });
+    // If the classroomName doesn't exist, render an error response
+    if (!classroomID) {
+      console.log(`/${classroomName}/${classroomTable} > No classroomID for classroomName ${classroomName}`);
+      return res.render('response', { msg: 'This classroom does not exist!' });
     }
 
-    console.log(`/${roomName}/${roomTable} > roomID: ${roomID}`);
-    getActiveClassAndUCID(roomName, (error, classID, UCID) => {
+    // If the classroomName exists, get the active classID and courseID
+    getActiveClassAndCourseID(classroomName, (error, classID, courseID) => {
       if (error) {
         handleError(res);
         return;
       }
 
-      classActiveID = classID;
-      classUCID = UCID;
+      // Store the classID and courseID in global variables for later use
+      activeClassID = classID;
+      classCourseID = courseID;
 
-      console.log(`/${roomName}/${roomTable} > classActiveID: ${classActiveID}`);
-      console.log(`/${roomName}/${roomTable} > classUCID: ${classUCID}`);
+      // Log the activeClassID and classCourseID for debugging purposes
+      console.log(`/${classroomName}/${classroomTable} > activeClassID: ${activeClassID}`);
+      console.log(`/${classroomName}/${classroomTable} > classCourseID: ${classCourseID}`);
 
-      if (classActiveID != classLastID) {
+      // If the class changes, call handleClassChange()
+      if (activeClassID != lastClassID) {
         handleClassChange();
       }
 
-      if (!classActiveID) {
-        console.log(`/${roomName}/${roomTable} > No class active in room ${roomName}`);
-        return res.render('response', { msg: 'No class active in room ' + roomName });
+      // If there is no active class, render an error response
+      if (!activeClassID) {
+        console.log(`/${classroomName}/${classroomTable} > No class active in classroom ${classroomName}`);
+        return res.render('response', { msg: 'No class active in classroom ' + classroomName });
       }
 
-      doesTableExists(roomID, roomTable, (error, tableID) => {
+      // Check if the given table exists in the classroom
+      doesTableExists(classroomID, classroomTable, (error, tableID) => {
         if (error) {
           handleError(res);
           return;
         }
 
+        // If the table doesn't exist, render an error response
         if (!tableID) {
-          console.log(`/${roomName}/${roomTable} > Table ${roomTable} does not exist in room ${roomID}`);
-          return res.render('response', { msg: 'Seems like this table does not exist in this room!' });
+          console.log(`/${classroomName}/${classroomTable} > Table ${classroomTable} does not exist in classroom ${classroomID}`);
+          return res.render('response', { msg: 'Seems like this table does not exist in this classroom!' });
         }
 
-        console.log(`/${roomName}/${roomTable} > TableID: ${tableID}`);
+        // Log the tableID for debugging purposes
+        console.log(`/${classroomName}/${classroomTable} > tableID: ${tableID}`);
+
+        // Check if the table is already occupied by another student
         isTableOccupied(tableID, (error, tableOccupied) => {
           if (error) {
             handleError(res);
             return;
           }
 
-          console.log(`/${roomName}/${roomTable} > Is table ${roomTable} occupied in room ${roomID}? : ${tableOccupied}`);
+          // Log whether the table is occupied or not
+          console.log(`/${classroomName}/${classroomTable} > Is table ${classroomTable} occupied in room ${classroomID}? : ${tableOccupied}`);
 
+          // If the table is occupied, render an error response
           if (tableOccupied) {
             res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
           } else {
-            res.render('index', { roomID, roomTable, tableID, classActiveID });
+            // If the table is not occupied, render the 'index' view with relevant data
+            res.render('index', { classroomID, classroomTable, tableID, activeClassID });
           }
         });
       });
     });
   });
 
+  // Function to handle database-related errors
   function handleError(res) {
-    console.log(`/${roomName}/${roomTable} > Database error!`);
+    console.log(`/${classroomName}/${classroomTable} > Database error!`);
     res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
   }
 
+  // Function to handle class change
   function handleClassChange() {
-    console.log(`/${roomName}/${roomTable} > Class changed!`);
-    phoneIds = [];
-    studentNumbers = [];
-    classLastID = classActiveID;
+    console.log(`/${classroomName}/${classroomTable} > Class changed!`);
+    phoneIds = []; // Clear the phoneIds array
+    studentNumbers = []; // Clear the studentNumbers array
+    lastClassID = activeClassID; // Update the classLastID with the current classActiveID
   }
 }
 
-
+// Function to handle the verification of phoneID
 function handleVerifyPhoneID(req, res) {
+  // Extract the phoneID from the request body
   const { phoneID } = req.body;
+
+  // Check if the phoneID is included in the phoneIds array
   if (phoneIds.includes(phoneID)) {
+    // If the phoneID is already present in the phoneIds array, it means the student has already marked attendance with that device
     console.log(`/verify-phoneID > The student with phoneID = ${phoneID} already marked his or someone's attendance with that device.`);
+
+    // Render a response to inform the student that they have already marked their attendance for this class
     res.render('response', { msg: 'You already marked your attendance to this class!' });
   }
 }
 
-function handleRegisterStudentNumber(req, res) {
-  const { studentNumber, phoneID, roomTable, roomID, tableID, classActiveStart } = req.body;
 
+function handleRegisterStudentNumber(req, res) {
+  // Destructure data from the request body
+  const { studentNumber, phoneID, classroomTable, classroomID, tableID, classActiveStart } = req.body;
+
+  // Log the received data for debugging purposes
   console.log(`/register-studentNumber > Received studentNumber: ${studentNumber}`);
   console.log(`/register-studentNumber > Received phoneID: ${phoneID}`);
-  console.log(`/register-studentNumber > Received roomTable: ${roomTable}`);
-  console.log(`/register-studentNumber > Received roomID: ${roomID}`);
+  console.log(`/register-studentNumber > Received classroomTable: ${classroomTable}`);
+  console.log(`/register-studentNumber > Received classroomID: ${classroomID}`);
   console.log(`/register-studentNumber > Received tableID: ${tableID}`);
   console.log(`/register-studentNumber > Received classActiveStart: ${classActiveStart}`);
-  console.log(`/register-studentNumber > Received classActiveID: ${classActiveID}`);
-  console.log(`/register-studentNumber > (classActiveStart == classActiveID): ${classActiveStart == classActiveID}`);
+  console.log(`/register-studentNumber > Received classActiveID: ${activeClassID}`);
+  console.log(`/register-studentNumber > (classActiveStart == classActiveID): ${classActiveStart == activeClassID}`);
 
+  // Check if the student number has already marked attendance
   if (studentNumbers.includes(studentNumber)) {
     console.log(`/register-studentNumber > The student number ${studentNumber} already marked his attendance.`);
-    return res.render('response', { msg: 'You already marked your attendance to this class!' });
+    return res.render('response', { msg: 'You already marked your attendance for this class!' });
   }
 
-  if (classActiveStart != classActiveID) {
+  // Check if the same class is still active
+  if (classActiveStart != activeClassID) {
     console.log(`/register-studentNumber > The class is not active anymore! You took too long!`);
     return res.render('response', { msg: 'The class is not active anymore! You took too long!' });
   }
 
-  findStudentIDinUC(classUCID, studentNumber, (error, studentID) => {
+  // Find the student ID for the given student number in the class
+  findStudentIDinUC(classCourseID, studentNumber, (error, studentID) => {
     if (error) {
       return handleError(res);
     }
 
+    // If the student number is not registered in the course, render an error response
     if (!studentID) {
-      console.log(`/register-studentNumber > There isn't any student ${studentNumber} registered in the UC ${classUCID}.`);
-      return res.render('response', { msg: 'Seems like you are not registered in the UC!' });
+      console.log(`/register-studentNumber > There isn't any student ${studentNumber} registered in the course ${classCourseID}.`);
+      return res.render('response', { msg: 'Seems like you are not registered in the course!' });
     }
 
+    // Log the studentID for debugging purposes
     console.log(`/register-studentNumber > The studentNumber ${studentNumber} has a studentID of: ${studentID}`);
 
+    // Check if the table is already occupied by another student
     isTableOccupied(tableID, (error, tableOccupied) => {
       if (error) {
         return handleError(res);
       }
 
-      console.log(`/register-studentNumber > Is table ${roomTable} occupied in room ${roomID}? : ${tableOccupied}`);
+      // Log whether the table is occupied or not
+      console.log(`/register-studentNumber > Is table ${classroomTable} occupied in room ${classroomID}? : ${tableOccupied}`);
 
+      // If the table is occupied, render an error response
       if (tableOccupied) {
         return res.render('response', { msg: 'It looks like this desk is already being occupied by another student!' });
       }
 
-      addRowToTable(['student_logs_id', 'student_id', 'class_id', 'room_table'], [null, parseInt(studentID, 10), classActiveID, parseInt(roomTable, 10)], (error, results) => {
+      // Add a new row to the 'student_logs' table with student's attendance information
+      addRowToTable(['student_logs_id', 'student_id', 'class_id', 'time_arrival', 'room_table'], [null, parseInt(studentID, 10), activeClassID, getDateTime(), parseInt(classroomTable, 10)], (error, results) => {
         if (error) {
           return handleError(res);
         } else {
-          console.log(`/register-studentNumber > [StudentID:${studentID}, classID:${classActiveID}, roomTable:${roomTable}] added to student_logs table`);
+          console.log(`/register-studentNumber > [StudentID:${studentID}, classID:${activeClassID}, DateTime:${getDateTime()} , classroomTable:${classroomTable}] added to student_logs table`);
         }
       });
 
-      updateTableStatus(roomID, roomTable, 'occupied', (error, results) => {
+      // Update the status of the table to 'occupied' in the 'room_tables' table
+      updateTableStatus(classroomID, classroomTable, 'occupied', (error, results) => {
         if (error) {
           return handleError(res);
         } else {
-          console.log(`/register-studentNumber > Desk ${roomTable} in roomID ${roomID} is now occupied in room_tables table`);
+          console.log(`/register-studentNumber > Table ${classroomTable} in classroomID ${classroomID} is now occupied in room_tables table`);
           console.log(`/register-studentNumber > Successful registration!`);
+
+          // Add the phoneID and studentNumber to their respective arrays
+          phoneIds.push(phoneID);
+          studentNumbers.push(studentNumber);
         }
       });
 
-      phoneIds.push(phoneID);
-      studentNumbers.push(studentNumber);
-
+      // Log the updated arrays for debugging purposes
       console.log(`/register-studentNumber > phoneId's = ${phoneIds}`);
       console.log(`/register-studentNumber > Students registered = ${studentNumbers}`);
+
+      // Render a success response after successful registration
       res.render('response', { msg: 'Thanks for your registration!' });
     });
   });
 
+  // Function to handle database-related errors
   function handleError(res) {
     console.log(`/register-studentNumber > Database error!`);
     res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
   }
 }
 
+// Function to get the current date and time in ISO format
+const getDateTime = () => {
+  const now = new Date();
+  return now.toISOString();
+};
 
-function doesRoomNameExist(roomName, callback) {
+// Function to check if a classroomName exists in the database
+function doesRoomNameExist(classroomName, callback) {
   const query = `SELECT room_id FROM rooms WHERE room_name = ?`;
-  const values = [roomName];
+  const values = [classroomName];
 
-  connection.query(query, values, function(error, results, fields) {
+  // Execute the database query
+  connection.query(query, values, function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error, null);
     }
 
     if (results.length > 0) {
-      const roomID = results[0].room_id;
-      callback(null, roomID);
+      // If the classroomName exists, pass the corresponding roomID to the callback
+      const classroomID = results[0].room_id;
+      callback(null, classroomID);
     } else {
+      // If the roomName does not exist, pass null to the callback
       callback(null, null);
     }
   });
 }
 
-function getActiveClassAndUCID(roomName, callback) {
+// Function to get the active classID and courseID for a given classroomName
+function getActiveClassAndCourseID(classroomName, callback) {
   const query = `SELECT class_id, id_uc FROM classes WHERE class_room = ? AND class_status = 'ativo'`;
-  const values = [roomName];
+  const values = [classroomName];
 
-  connection.query(query, values, function(error, results, fields) {
+  // Execute the database query
+  connection.query(query, values, function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
-    
+
     if (results.length > 0) {
+      // If an active class exists, pass the activeClassID and courseID to the callback
       const activeClassID = results[0].class_id;
-      const UCID = results[0].id_uc;
-      callback(null, activeClassID, UCID);
+      const courseID = results[0].id_uc;
+      callback(null, activeClassID, courseID);
     } else {
+      // If there is no active class, pass null for both activeClassID and courseID to the callback
       callback(null, null);
     }
   });
 }
 
-function doesTableExists(roomID, tableNumber, callback) {
+// Function to check if a table with a given classroomID and tableNumber exists in the database
+function doesTableExists(classroomID, tableNumber, callback) {
   const query = `SELECT room_table_id FROM room_tables WHERE room_id = ? AND table_number = ?`;
 
-  connection.query(query, [roomID, tableNumber], function(error, results, fields) {
+  // Execute the database query with classroomID and tableNumber as parameters
+  connection.query(query, [classroomID, tableNumber], function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
 
     if (results.length > 0) {
+      // If the table exists, pass the corresponding tableID to the callback
       const tableID = results[0].room_table_id;
       callback(null, tableID);
     } else {
+      // If the table does not exist, pass null to the callback
       callback(null, null);
     }
   });
 }
 
+// Function to check if a table with a given tableID is occupied in the database
 function isTableOccupied(tableID, callback) {
   const query = `SELECT tablet_status FROM room_tables WHERE room_table_id = ?`;
 
-  connection.query(query, [tableID], function(error, results, fields) {
+  // Execute the database query with tableID as a parameter
+  connection.query(query, [tableID], function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
 
     if (results.length > 0) {
+      // If the table exists, check if it is occupied and pass the result to the callback
       const tableStatus = results[0].tablet_status;
       callback(null, tableStatus === 'occupied');
     } else {
+      // If the table does not exist, pass false to the callback
       callback(null, false);
     }
   });
 }
 
-function findStudentIDinUC(UCID, studentNumber, callback) {
-  const query = `SELECT student_id FROM students WHERE id_UC = '${UCID}' AND student_number = '${studentNumber}'`;
-  
-  connection.query(query, function(error, results, fields) {
+// Function to find the studentID in the specified courseID by student number
+function findStudentIDinUC(courseID, studentNumber, callback) {
+  const query = `SELECT student_id FROM students WHERE id_UC = '${courseID}' AND student_number = '${studentNumber}'`;
+
+  // Execute the database query with courseID and studentNumber
+  connection.query(query, function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
-    if (results && results.length > 0) { 
+    if (results && results.length > 0) {
+      // If the student is found in the specified UC, pass the studentID to the callback
       const studentID = results[0].student_id;
-      callback(null, studentID); 
+      callback(null, studentID);
     } else {
-      callback(null, null); 
+      // If the student is not found in the couse, pass null to the callback
+      callback(null, null);
     }
   });
 }
 
+// Function to add a row to the student_logs table with given column names and values
 function addRowToTable(columnNames, values, callback) {
   const sanitizedValues = values.map(value => connection.escape(value));
   const query = `INSERT INTO student_logs (${columnNames.join(', ')}) VALUES (${sanitizedValues.map(v => '?').join(', ')})`;
 
-  connection.query(query, sanitizedValues, function(error, results, fields) {
+  // Execute the database query with sanitized values
+  connection.query(query, sanitizedValues, function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
 
+    // If successful, pass the results to the callback
     callback(null, results);
   });
 }
 
-function updateTableStatus(room_id, room_table, status, callback) {
+// Function to update the status of a table (desk) in the room_tables table
+function updateTableStatus(classrooID, classroomTable, status, callback) {
   const query = `UPDATE room_tables SET tablet_status = ? WHERE room_id = ? AND table_number = ?`;
-  const values = [status, room_id, room_table];
+  const values = [status, classrooID, classroomTable];
 
-  connection.query(query, values, function(error, results, fields) {
+  // Execute the database query with the specified parameters
+  connection.query(query, values, function (error, results, fields) {
     if (error) {
+      // If there's an error, pass it to the callback
       return callback(error);
     }
-    
+
+    // If successful, pass the results to the callback
     callback(null, results);
   });
 }
