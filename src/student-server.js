@@ -21,6 +21,7 @@ const envPath = path.join('/home/guilherme/Desktop/IoT_Attendance_Project/src', 
 dotenv.config({ path: envPath });
 
 // Create a MySQL database connection using environment variables
+// .env file at /home/guilherme/Desktop/IoT_Attendance_Project
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -68,7 +69,7 @@ function handleQRcodeRequest(req, res) {
   // Check if the given classroomName exists in the database
   doesRoomNameExist(classroomName, (error, classroomID) => {
     if (error) {
-      handleError(res);
+      handleError(res, error);
       return;
     }
 
@@ -81,7 +82,7 @@ function handleQRcodeRequest(req, res) {
     // If the classroomName exists, get the active classID and courseID
     getActiveClassAndCourseID(classroomName, (error, classID, courseID) => {
       if (error) {
-        handleError(res);
+        handleError(res, error);
         return;
       }
 
@@ -107,7 +108,7 @@ function handleQRcodeRequest(req, res) {
       // Check if the given table exists in the classroom
       doesTableExists(classroomID, classroomTable, (error, tableID) => {
         if (error) {
-          handleError(res);
+          handleError(res, error);
           return;
         }
 
@@ -123,7 +124,7 @@ function handleQRcodeRequest(req, res) {
         // Check if the table is already occupied by another student
         isTableOccupied(tableID, (error, tableOccupied) => {
           if (error) {
-            handleError(res);
+            handleError(res, error);
             return;
           }
 
@@ -143,8 +144,8 @@ function handleQRcodeRequest(req, res) {
   });
 
   // Function to handle database-related errors
-  function handleError(res) {
-    console.log(`/${classroomName}/${classroomTable} > Database error!`);
+  function handleError(res, error) {
+    console.log(`/${classroomName}/${classroomTable} > Database error!` + error);
     res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
   }
 
@@ -175,7 +176,7 @@ function handleVerifyPhoneID(req, res) {
 
 function handleRegisterStudentNumber(req, res) {
   // Destructure data from the request body
-  const { studentNumber, phoneID, classroomTable, classroomID, tableID, classActiveStart } = req.body;
+  const { studentNumber, phoneID, classroomTable, classroomID, tableID, startClassID } = req.body;
 
   // Log the received data for debugging purposes
   console.log(`/register-studentNumber > Received studentNumber: ${studentNumber}`);
@@ -183,9 +184,9 @@ function handleRegisterStudentNumber(req, res) {
   console.log(`/register-studentNumber > Received classroomTable: ${classroomTable}`);
   console.log(`/register-studentNumber > Received classroomID: ${classroomID}`);
   console.log(`/register-studentNumber > Received tableID: ${tableID}`);
-  console.log(`/register-studentNumber > Received classActiveStart: ${classActiveStart}`);
-  console.log(`/register-studentNumber > Received classActiveID: ${activeClassID}`);
-  console.log(`/register-studentNumber > (classActiveStart == classActiveID): ${classActiveStart == activeClassID}`);
+  console.log(`/register-studentNumber > Received startClassID: ${startClassID}`);
+  console.log(`/register-studentNumber > Received activeClassID: ${activeClassID}`);
+  console.log(`/register-studentNumber > (startClassID == activeClassID): ${startClassID == activeClassID}`);
 
   // Check if the student number has already marked attendance
   if (studentNumbers.includes(studentNumber)) {
@@ -194,7 +195,7 @@ function handleRegisterStudentNumber(req, res) {
   }
 
   // Check if the same class is still active
-  if (classActiveStart != activeClassID) {
+  if (startClassID != activeClassID) {
     console.log(`/register-studentNumber > The class is not active anymore! You took too long!`);
     return res.render('response', { msg: 'The class is not active anymore! You took too long!' });
   }
@@ -202,7 +203,8 @@ function handleRegisterStudentNumber(req, res) {
   // Find the student ID for the given student number in the class
   findStudentIDinUC(classCourseID, studentNumber, (error, studentID) => {
     if (error) {
-      return handleError(res);
+      handleError(res, error);
+      return;
     }
 
     // If the student number is not registered in the course, render an error response
@@ -217,7 +219,8 @@ function handleRegisterStudentNumber(req, res) {
     // Check if the table is already occupied by another student
     isTableOccupied(tableID, (error, tableOccupied) => {
       if (error) {
-        return handleError(res);
+        handleError(res, error);
+        return;
       }
 
       // Log whether the table is occupied or not
@@ -231,7 +234,8 @@ function handleRegisterStudentNumber(req, res) {
       // Add a new row to the 'student_logs' table with student's attendance information
       addRowToTable(['student_logs_id', 'student_id', 'class_id', 'time_arrival', 'room_table'], [null, parseInt(studentID, 10), activeClassID, getDateTime(), parseInt(classroomTable, 10)], (error, results) => {
         if (error) {
-          return handleError(res);
+          handleError(res, error);
+          return;
         } else {
           console.log(`/register-studentNumber > [StudentID:${studentID}, classID:${activeClassID}, DateTime:${getDateTime()} , classroomTable:${classroomTable}] added to student_logs table`);
         }
@@ -240,7 +244,8 @@ function handleRegisterStudentNumber(req, res) {
       // Update the status of the table to 'occupied' in the 'room_tables' table
       updateTableStatus(classroomID, classroomTable, 'occupied', (error, results) => {
         if (error) {
-          return handleError(res);
+          handleError(res, error);
+          return;
         } else {
           console.log(`/register-studentNumber > Table ${classroomTable} in classroomID ${classroomID} is now occupied in room_tables table`);
           console.log(`/register-studentNumber > Successful registration!`);
@@ -248,12 +253,12 @@ function handleRegisterStudentNumber(req, res) {
           // Add the phoneID and studentNumber to their respective arrays
           phoneIds.push(phoneID);
           studentNumbers.push(studentNumber);
+          
+          // Log the updated arrays for debugging purposes
+        console.log(`/register-studentNumber > phoneId's = ${phoneIds}`);
+        console.log(`/register-studentNumber > Students registered = ${studentNumbers}`);
         }
       });
-
-      // Log the updated arrays for debugging purposes
-      console.log(`/register-studentNumber > phoneId's = ${phoneIds}`);
-      console.log(`/register-studentNumber > Students registered = ${studentNumbers}`);
 
       // Render a success response after successful registration
       res.render('response', { msg: 'Thanks for your registration!' });
@@ -261,8 +266,8 @@ function handleRegisterStudentNumber(req, res) {
   });
 
   // Function to handle database-related errors
-  function handleError(res) {
-    console.log(`/register-studentNumber > Database error!`);
+  function handleError(res, error) {
+    console.log(`/register-studentNumber > Database error!` + error);
     res.render('response', { msg: 'We are experiencing problems with our DB, please be patient...' });
   }
 }

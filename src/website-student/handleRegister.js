@@ -12,7 +12,7 @@ function handleSubmit(event) {
   const classroomTable = document.getElementById('classroomTable').innerHTML;
   const classroomID = document.getElementById('classroomID').innerHTML;
   const tableID = document.getElementById('tableID').innerHTML;
-  const classActiveStart = document.getElementById('activeClassID').innerHTML;
+  const startClassID = document.getElementById('activeClassID').innerHTML;
 
   // Regular expression to validate the student number format
   if (/^[a-zA-Z]\d+$/.test(studentNumber)) {
@@ -25,7 +25,7 @@ function handleSubmit(event) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID, classroomTable, classroomID, tableID, classActiveStart })
+      body: JSON.stringify({ studentNumber: formattedStudentNumber, phoneID, classroomTable, classroomID, tableID, startClassID })
     })
       .then(response => {
         // Once the response is received, extract the HTML content from the response body
